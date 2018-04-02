@@ -53,6 +53,7 @@ public class AlbumFragment extends LibraryFragment<Album,AlbumAdapter>{
     protected void initAdapter() {
         mAdapter = new AlbumAdapter(mContext,R.layout.item_album_recycle_grid,mMultiChoice);
         mAdapter.setModeChangeCallback(mode -> {
+            mAdapter.setUpGlideOption(mode,R.attr.default_album);
             mRecyclerView.setLayoutManager(mode == Constants.LIST_MODEL ? new LinearLayoutManager(mContext) : new GridLayoutManager(mContext, 2));
             mRecyclerView.setAdapter(mAdapter);
         });

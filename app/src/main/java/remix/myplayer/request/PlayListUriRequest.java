@@ -1,8 +1,8 @@
 package remix.myplayer.request;
 
-import android.net.Uri;
+import android.widget.ImageView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
+import com.bumptech.glide.request.RequestOptions;
 
 import io.reactivex.Observable;
 import remix.myplayer.bean.netease.NSearchRequest;
@@ -17,13 +17,14 @@ import static remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType;
  */
 
 public class PlayListUriRequest extends LibraryUriRequest {
-    public PlayListUriRequest(SimpleDraweeView image, NSearchRequest request,RequestConfig config) {
-        super(image,request,config);
+
+    public PlayListUriRequest(ImageView image, NSearchRequest request, RequestOptions glideOption){
+        super(image,request,glideOption);
     }
 
     @Override
     public void onError(String errMsg) {
-        mImage.setImageURI(Uri.EMPTY);
+        mImage.setImageDrawable(mGlideOption.getErrorPlaceholder());
         LogUtil.d("Cover","Err: " + errMsg);
     }
 

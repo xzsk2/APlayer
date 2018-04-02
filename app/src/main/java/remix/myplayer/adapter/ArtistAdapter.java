@@ -16,10 +16,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.github.promeg.pinyinhelper.Pinyin;
 
 import butterknife.BindView;
@@ -31,7 +31,6 @@ import remix.myplayer.bean.netease.NSearchRequest;
 import remix.myplayer.listener.AlbArtFolderPlaylistListener;
 import remix.myplayer.request.ImageUriRequest;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.ui.MultiChoice;
@@ -43,9 +42,6 @@ import remix.myplayer.util.DensityUtil;
 import remix.myplayer.util.SPUtil;
 import remix.myplayer.util.ToastUtil;
 
-import static remix.myplayer.request.ImageUriRequest.BIG_IMAGE_SIZE;
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
-
 /**
  * Created by Remix on 2015/12/22.
  */
@@ -56,8 +52,11 @@ import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
 public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> implements FastScroller.SectionIndexer{
     public ArtistAdapter(Context context,int layoutId,MultiChoice multiChoice) {
         super(context,layoutId,multiChoice);
-        ListModel =  SPUtil.getValue(context,SPUtil.SETTING_KEY.SETTING_NAME,"ArtistModel",Constants.GRID_MODEL);
+        mListModel =  SPUtil.getValue(context,SPUtil.SETTING_KEY.SETTING_NAME,"ArtistModel",Constants.GRID_MODEL);
+        setUpGlideOption(mListModel,R.attr.default_artist);
     }
+
+
 
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -87,9 +86,9 @@ public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> impleme
                 return;
             }
             //设置图标
-            headerHolder.mDivider.setVisibility(ListModel == Constants.LIST_MODEL ? View.VISIBLE : View.GONE);
-            headerHolder.mListModelBtn.setColorFilter(ListModel == Constants.LIST_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
-            headerHolder.mGridModelBtn.setColorFilter(ListModel == Constants.GRID_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
+            headerHolder.mDivider.setVisibility(mListModel == Constants.LIST_MODEL ? View.VISIBLE : View.GONE);
+            headerHolder.mListModelBtn.setColorFilter(mListModel == Constants.LIST_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
+            headerHolder.mGridModelBtn.setColorFilter(mListModel == Constants.GRID_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
             headerHolder.mGridModelBtn.setOnClickListener(v -> switchMode(headerHolder,v));
             headerHolder.mListModelBtn.setOnClickListener(v -> switchMode(headerHolder,v));
             return;
@@ -106,14 +105,11 @@ public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> impleme
             new AsynLoadSongNum(holder.mText2,Constants.ARTIST).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,artistId);
         }
         //设置封面
-        final int imageSize = ListModel == 1 ? SMALL_IMAGE_SIZE : BIG_IMAGE_SIZE;
-        new LibraryUriRequest(holder.mImage, new NSearchRequest(artistId,artist.getArtist(),
-                100, ImageUriRequest.URL_ARTIST),
-                new RequestConfig.Builder(imageSize,imageSize).build()).load();
+        new LibraryUriRequest(holder.mImage, new NSearchRequest(artistId,artist.getArtist(), 100,ImageUriRequest.URL_ARTIST), mGlideOption).load();
 
         //item点击效果
         holder.mContainer.setBackground(
-                Theme.getPressAndSelectedStateListRippleDrawable(ListModel,mContext));
+                Theme.getPressAndSelectedStateListRippleDrawable(mListModel,mContext));
 
         holder.mContainer.setOnClickListener(v -> {
             if(holder.getAdapterPosition() - 1 < 0){
@@ -138,8 +134,8 @@ public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> impleme
 
         //按钮点击效果
         int size = DensityUtil.dip2px(mContext,45);
-        Drawable defaultDrawable = Theme.getShape(ListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, Color.TRANSPARENT, size, size);
-        Drawable selectDrawable = Theme.getShape(ListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, ThemeStore.getSelectColor(), size, size);
+        Drawable defaultDrawable = Theme.getShape(mListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, Color.TRANSPARENT, size, size);
+        Drawable selectDrawable = Theme.getShape(mListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, ThemeStore.getSelectColor(), size, size);
         holder.mButton.setBackground(Theme.getPressDrawable(
                 defaultDrawable,
                 selectDrawable,
@@ -170,7 +166,7 @@ public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> impleme
         }
 
         //设置padding
-        if(ListModel == 2 && holder.mRoot != null){
+        if(mListModel == Constants.GRID_MODEL && holder.mRoot != null){
             if(position % 2 == 1){
                 holder.mRoot.setPadding(DensityUtil.dip2px(mContext,6),DensityUtil.dip2px(mContext,4),DensityUtil.dip2px(mContext,3),DensityUtil.dip2px(mContext,4));
             } else {
@@ -182,7 +178,7 @@ public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> impleme
 
     @Override
     public void saveMode() {
-        SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ArtistModel",ListModel);
+        SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ArtistModel", mListModel);
     }
 
 //    @NonNull
@@ -215,7 +211,7 @@ public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> impleme
         @Nullable
         TextView mText2;
         @BindView(R.id.item_simpleiview)
-        SimpleDraweeView mImage;
+        ImageView mImage;
         @BindView(R.id.item_button)
         ImageButton mButton;
         @BindView(R.id.item_container)

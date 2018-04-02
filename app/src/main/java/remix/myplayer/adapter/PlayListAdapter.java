@@ -17,7 +17,6 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.github.promeg.pinyinhelper.Pinyin;
 
 import butterknife.BindView;
@@ -28,7 +27,6 @@ import remix.myplayer.bean.netease.NSearchRequest;
 import remix.myplayer.listener.AlbArtFolderPlaylistListener;
 import remix.myplayer.request.ImageUriRequest;
 import remix.myplayer.request.PlayListUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.ui.MultiChoice;
@@ -40,9 +38,6 @@ import remix.myplayer.util.DensityUtil;
 import remix.myplayer.util.SPUtil;
 import remix.myplayer.util.ToastUtil;
 
-import static remix.myplayer.request.ImageUriRequest.BIG_IMAGE_SIZE;
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
-
 /**
  * Created by taeja on 16-1-15.
  */
@@ -51,12 +46,10 @@ import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
  * 播放列表的适配器
  */
 public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> implements FastScroller.SectionIndexer{
-    private MultiChoice mMultiChoice;
-
     public PlayListAdapter(Context context,int layoutId,MultiChoice multiChoice) {
         super(context,layoutId,multiChoice);
-        ListModel =  SPUtil.getValue(context,SPUtil.SETTING_KEY.SETTING_NAME,"PlayListModel",Constants.GRID_MODEL);
-        this.mMultiChoice = multiChoice;
+        mListModel =  SPUtil.getValue(context,SPUtil.SETTING_KEY.SETTING_NAME,"PlayListModel",Constants.GRID_MODEL);
+        setUpGlideOption(mListModel,R.attr.default_album);
     }
 
     @Override
@@ -88,9 +81,9 @@ public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> imp
                 return;
             }
             //设置图标
-            headerHolder.mDivider.setVisibility(ListModel == Constants.LIST_MODEL ? View.VISIBLE : View.GONE);
-            headerHolder.mListModelBtn.setColorFilter(ListModel == Constants.LIST_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
-            headerHolder.mGridModelBtn.setColorFilter(ListModel == Constants.GRID_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
+            headerHolder.mDivider.setVisibility(mListModel == Constants.LIST_MODEL ? View.VISIBLE : View.GONE);
+            headerHolder.mListModelBtn.setColorFilter(mListModel == Constants.LIST_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
+            headerHolder.mGridModelBtn.setColorFilter(mListModel == Constants.GRID_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
             headerHolder.mGridModelBtn.setOnClickListener(v -> switchMode(headerHolder,v));
             headerHolder.mListModelBtn.setOnClickListener(v -> switchMode(headerHolder,v));
             return;
@@ -105,10 +98,9 @@ public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> imp
         holder.mName.setText(info.Name);
         holder.mOther.setText(mContext.getString(R.string.song_count,info.Count));
         //设置专辑封面
-        final int imageSize = ListModel == 1 ? SMALL_IMAGE_SIZE : BIG_IMAGE_SIZE;
         new PlayListUriRequest(holder.mImage,
                 new NSearchRequest(info.getId(), info.getName(), 1, ImageUriRequest.URL_PLAYLIST),
-                new RequestConfig.Builder(imageSize,imageSize).build()).load();
+                mGlideOption).load();
 
         holder.mContainer.setOnClickListener(v -> {
             if(holder.getAdapterPosition() - 1 < 0){
@@ -142,8 +134,8 @@ public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> imp
         });
         //点击效果
         int size = DensityUtil.dip2px(mContext,45);
-        Drawable defaultDrawable = Theme.getShape(ListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, Color.TRANSPARENT, size, size);
-        Drawable selectDrawable = Theme.getShape(ListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, ThemeStore.getSelectColor(), size, size);
+        Drawable defaultDrawable = Theme.getShape(mListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, Color.TRANSPARENT, size, size);
+        Drawable selectDrawable = Theme.getShape(mListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, ThemeStore.getSelectColor(), size, size);
         holder.mButton.setBackground(Theme.getPressDrawable(
                 defaultDrawable,
                 selectDrawable,
@@ -153,7 +145,7 @@ public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> imp
 
         //背景点击效果
         holder.mContainer.setBackground(
-                Theme.getPressAndSelectedStateListRippleDrawable(ListModel, mContext));
+                Theme.getPressAndSelectedStateListRippleDrawable(mListModel, mContext));
 
         //是否处于选中状态
         if(MultiChoice.TAG.equals(PlayListFragment.TAG) &&
@@ -164,7 +156,7 @@ public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> imp
         }
 
         //设置padding
-        if(ListModel == 2 && holder.mRoot != null){
+        if(mListModel == Constants.GRID_MODEL && holder.mRoot != null){
             if(position % 2 == 1){
                 holder.mRoot.setPadding(DensityUtil.dip2px(mContext,6),DensityUtil.dip2px(mContext,4),DensityUtil.dip2px(mContext,3),DensityUtil.dip2px(mContext,4));
             } else {
@@ -191,7 +183,7 @@ public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> imp
         @BindView(R.id.item_text2)
         TextView mOther;
         @BindView(R.id.item_simpleiview)
-        SimpleDraweeView mImage;
+        ImageView mImage;
         @BindView(R.id.item_button)
         ImageView mButton;
         @BindView(R.id.item_container)
@@ -207,7 +199,7 @@ public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> imp
 
     @Override
     protected void saveMode() {
-        SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"PlayListModel",ListModel);
+        SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"PlayListModel", mListModel);
     }
 
     static class PlayListListHolder extends PlayListHolder{

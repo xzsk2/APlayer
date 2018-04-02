@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:id="@+id/item_root"
     android:layout_width="match_parent"
     android:layout_height="214dp"
@@ -12,18 +11,11 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/d204_size"
         android:background="?attr/background_grid">
-        <com.facebook.drawee.view.SimpleDraweeView
+        <ImageView
             android:layout_width="@dimen/d123_size"
             android:layout_height="@dimen/d123_size"
             android:id="@+id/item_simpleiview"
             android:layout_alignParentTop="true"
-            fresco:fadeDuration="@integer/FadeDuration"
-            fresco:actualImageScaleType="centerCrop"
-            fresco:placeholderImage="?attr/default_album"
-            fresco:placeholderImageScaleType="centerCrop"
-            fresco:failureImage="?attr/default_artist"
-            fresco:failureImageScaleType="centerCrop"
-            fresco:roundedCornerRadius="@dimen/d2_size"
             android:layout_marginTop="@dimen/d18_size"
             android:layout_marginRight="@dimen/d24_size"
             android:layout_marginLeft="@dimen/d24_size"

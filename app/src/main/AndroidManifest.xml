@@ -36,7 +36,8 @@
         <!-- 主页面 -->
         <activity
             android:name=".ui.activity.MainActivity"
-            android:theme="@style/ActivityStyle">
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.MUSIC_PLAYER" />
@@ -91,7 +92,8 @@
             android:name=".ui.activity.PlayerActivity"
             android:parentActivityName=".ui.activity.MainActivity"
             android:theme="@style/AudioHolderStyle"
-            android:windowSoftInputMode="adjustPan">
+            android:windowSoftInputMode="adjustPan"
+            android:screenOrientation="portrait">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ui.activity.MainActivity" />
@@ -99,59 +101,72 @@
         <!-- 搜索 -->
         <activity
             android:name=".ui.activity.SearchActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 子目录列表 -->
         <activity
             android:name=".ui.activity.ChildHolderActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!--手动排序-->
         <activity android:name=".ui.activity.CustomSortActivity"
-            android:theme="@style/ActivityStyle"/>
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 海报分享 -->
         <activity
             android:name=".ui.activity.RecordShareActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 关于 -->
         <activity
             android:name=".ui.activity.AboutActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 最近添加 -->
         <activity
             android:name=".ui.activity.RecentlyActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 反馈 -->
         <activity
             android:name=".ui.activity.FeedBackActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 扫描大小设置 -->
         <activity
             android:name=".ui.activity.ScanActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 均衡器 -->
         <activity
             android:name=".ui.activity.EQActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 设置 -->
         <activity
             android:name=".ui.activity.SettingActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 播放列表歌曲选择 -->
         <activity
             android:name=".ui.activity.SongChooseActivity"
-            android:theme="@style/ActivityStyle" />
+            android:theme="@style/ActivityStyle"
+            android:screenOrientation="portrait"/>
         <!-- 锁屏页 -->
         <activity
             android:name=".ui.activity.LockScreenActivity"
             android:excludeFromRecents="true"
             android:exported="false"
             android:launchMode="singleInstance"
-            android:theme="@style/LockScreenActivity" />
+            android:theme="@style/LockScreenActivity"
+            android:screenOrientation="portrait"/>
         <!-- shortcut过渡 -->
         <activity
             android:name=".ui.activity.AppShortcutActivity"
             android:excludeFromRecents="true"
             android:launchMode="singleInstance"
-            android:theme="@style/AppShortcut" />
+            android:theme="@style/AppShortcut"
+            android:screenOrientation="portrait"/>
         <!-- 添加歌曲到播放列表 -->
         <activity
             android:name=".ui.dialog.AddtoPlayListDialog"
@@ -178,13 +193,11 @@
         <activity
             android:name=".ui.dialog.ShareDialog"
             android:configChanges="keyboardHidden|orientation"
-            android:screenOrientation="portrait"
             android:theme="@style/BaseDialogTheme">
 
             <!-- 微博分享 -->
             <intent-filter>
                 <action android:name="com.sina.weibo.sdk.action.ACTION_SDK_REQ_ACTIVITY" />
-
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>

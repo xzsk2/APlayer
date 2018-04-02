@@ -45,6 +45,7 @@ public class PlayListFragment extends LibraryFragment<PlayList,PlayListAdapter>{
     protected void initAdapter() {
         mAdapter = new PlayListAdapter(mContext,R.layout.item_playlist_recycle_grid,mMultiChoice);
         mAdapter.setModeChangeCallback(mode -> {
+            mAdapter.setUpGlideOption(mode,R.attr.default_album);
             mRecyclerView.setLayoutManager(mode == Constants.LIST_MODEL ? new LinearLayoutManager(mContext) : new GridLayoutManager(mContext, 2));
             mRecyclerView.setAdapter(mAdapter);
         });

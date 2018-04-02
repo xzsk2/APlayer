@@ -16,9 +16,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.github.promeg.pinyinhelper.Pinyin;
 
 import java.util.ArrayList;
@@ -30,7 +30,6 @@ import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.interfaces.OnUpdateHighLightListener;
 import remix.myplayer.listener.SongPopupListener;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.service.MusicService;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.theme.ThemeStore;
@@ -45,7 +44,6 @@ import remix.myplayer.util.DensityUtil;
 import remix.myplayer.util.Global;
 import remix.myplayer.util.ToastUtil;
 
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
 import static remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType;
 
 /**
@@ -74,7 +72,10 @@ public class SongAdapter extends HeaderAdapter<Song,BaseViewHolder> implements F
         int size = DensityUtil.dip2px(mContext,60);
         mDefaultDrawable = Theme.getShape(GradientDrawable.OVAL,Color.TRANSPARENT,size,size);
         mSelectDrawable = Theme.getShape(GradientDrawable.OVAL,ThemeStore.getSelectColor(),size,size);
+
+        setUpGlideOption(Constants.LIST_MODEL,R.attr.default_album);
     }
+
 
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
@@ -157,7 +158,7 @@ public class SongAdapter extends HeaderAdapter<Song,BaseViewHolder> implements F
 //        }
 
         //封面
-        new LibraryUriRequest(holder.mImage, getSearchRequestWithAlbumType(song),new RequestConfig.Builder(SMALL_IMAGE_SIZE, SMALL_IMAGE_SIZE).build()).load();
+        new LibraryUriRequest(holder.mImage, getSearchRequestWithAlbumType(song), mGlideOption).load();
 
         //是否为无损
         if(!TextUtils.isEmpty(song.getDisplayname())){
@@ -288,7 +289,7 @@ public class SongAdapter extends HeaderAdapter<Song,BaseViewHolder> implements F
         @BindView(R.id.song_other)
         TextView mOther;
         @BindView(R.id.song_head_image)
-        SimpleDraweeView mImage;
+        ImageView mImage;
         @BindView(R.id.song_columnview)
         ColumnView mColumnView;
         @BindView(R.id.song_button)

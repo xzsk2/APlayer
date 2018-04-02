@@ -1,7 +1,6 @@
 package remix.myplayer.ui.activity;
 
 import android.content.Context;
-import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
@@ -99,7 +98,7 @@ public class BaseActivity extends AppCompatActivity {
         setUpTheme();
         super.onCreate(savedInstanceState);
         //静止横屏
-        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+//        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         //将该activity添加到ActivityManager,用于退出程序时关闭
         ActivityManager.AddActivity(this);
         setNavigationBarColor();

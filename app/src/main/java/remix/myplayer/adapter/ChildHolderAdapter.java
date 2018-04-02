@@ -259,10 +259,10 @@ public class ChildHolderAdapter extends HeaderAdapter<Song,BaseViewHolder> imple
         @BindView(R.id.album_holder_item_title)
         TextView mTitle;
         @BindView(R.id.song_item_button)
-        public ImageButton mButton;
+        ImageButton mButton;
         @BindView(R.id.song_columnview)
         ColumnView mColumnView;
-        public View mContainer;
+        View mContainer;
         ChildHolderViewHolder(View itemView) {
             super(itemView);
             mContainer = itemView;

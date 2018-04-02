@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.PopupMenu;
@@ -20,7 +21,6 @@ import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.github.promeg.pinyinhelper.Pinyin;
 
 import butterknife.BindView;
@@ -28,10 +28,8 @@ import remix.myplayer.R;
 import remix.myplayer.adapter.holder.BaseViewHolder;
 import remix.myplayer.asynctask.AsynLoadSongNum;
 import remix.myplayer.bean.mp3.Album;
-import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.listener.AlbArtFolderPlaylistListener;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.ui.MultiChoice;
@@ -44,8 +42,7 @@ import remix.myplayer.util.ImageUriUtil;
 import remix.myplayer.util.SPUtil;
 import remix.myplayer.util.ToastUtil;
 
-import static remix.myplayer.request.ImageUriRequest.BIG_IMAGE_SIZE;
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
+import static remix.myplayer.request.ImageUriRequest.URL_ALBUM;
 
 
 /**
@@ -59,9 +56,11 @@ public class AlbumAdapter extends HeaderAdapter<Album, BaseViewHolder> implement
 
     public AlbumAdapter(Context context, int layoutId, MultiChoice multiChoice) {
         super(context,layoutId,multiChoice);
-        ListModel =  SPUtil.getValue(context,SPUtil.SETTING_KEY.SETTING_NAME,"AlbumModel",Constants.GRID_MODEL);
+        mListModel =  SPUtil.getValue(context,SPUtil.SETTING_KEY.SETTING_NAME,"AlbumModel",Constants.GRID_MODEL);
+        setUpGlideOption(mListModel,R.attr.default_album);
     }
 
+    @NonNull
     @Override
     public BaseViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         if(viewType == TYPE_HEADER){
@@ -90,9 +89,9 @@ public class AlbumAdapter extends HeaderAdapter<Album, BaseViewHolder> implement
                 return;
             }
             //设置图标
-            headerHolder.mDivider.setVisibility(ListModel == Constants.LIST_MODEL ? View.VISIBLE : View.GONE);
-            headerHolder.mListModelBtn.setColorFilter(ListModel == Constants.LIST_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
-            headerHolder.mGridModelBtn.setColorFilter(ListModel == Constants.GRID_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
+            headerHolder.mDivider.setVisibility(mListModel == Constants.LIST_MODEL ? View.VISIBLE : View.GONE);
+            headerHolder.mListModelBtn.setColorFilter(mListModel == Constants.LIST_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
+            headerHolder.mGridModelBtn.setColorFilter(mListModel == Constants.GRID_MODEL ? ColorUtil.getColor(R.color.select_model_button_color) : ColorUtil.getColor(R.color.default_model_button_color));
             headerHolder.mGridModelBtn.setOnClickListener(v -> switchMode(headerHolder,v));
             headerHolder.mListModelBtn.setOnClickListener(v -> switchMode(headerHolder,v));
             return;
@@ -107,21 +106,16 @@ public class AlbumAdapter extends HeaderAdapter<Album, BaseViewHolder> implement
         holder.mText2.setText(album.getArtist());
 
         //设置封面
-        final int albumid = album.getAlbumID();
+        final int albumId = album.getAlbumID();
 
-        final int imageSize = ListModel == 1 ? SMALL_IMAGE_SIZE : BIG_IMAGE_SIZE;
-        Song song = new Song();
-        song.setArtist(album.getArtist());
-        song.setAlbum(album.getAlbum());
-        song.setAlbumId(albumid);
-        new LibraryUriRequest(holder.mImage, ImageUriUtil.getSearchRequestWithAlbumType(song),new RequestConfig.Builder(imageSize,imageSize).build()).load();
+        new LibraryUriRequest(holder.mImage, ImageUriUtil.getSearchRequest(album,URL_ALBUM),mGlideOption).load();
         if(holder instanceof AlbumListHolder){
-            new AsynLoadSongNum(holder.mText2,Constants.ALBUM).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,albumid);
+            new AsynLoadSongNum(holder.mText2,Constants.ALBUM).executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,albumId);
         }
 
         //背景点击效果
         holder.mContainer.setBackground(
-                Theme.getPressAndSelectedStateListRippleDrawable(ListModel, mContext));
+                Theme.getPressAndSelectedStateListRippleDrawable(mListModel, mContext));
 
         holder.mContainer.setOnClickListener(v -> {
             if(holder.getAdapterPosition() - 1 < 0){
@@ -146,8 +140,8 @@ public class AlbumAdapter extends HeaderAdapter<Album, BaseViewHolder> implement
 
         //点击效果
         int size = DensityUtil.dip2px(mContext,45);
-        Drawable defaultDrawable = Theme.getShape(ListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, Color.TRANSPARENT, size, size);
-        Drawable selectDrawable = Theme.getShape(ListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, ThemeStore.getSelectColor(), size, size);
+        Drawable defaultDrawable = Theme.getShape(mListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, Color.TRANSPARENT, size, size);
+        Drawable selectDrawable = Theme.getShape(mListModel == Constants.LIST_MODEL ? GradientDrawable.OVAL : GradientDrawable.RECTANGLE, ThemeStore.getSelectColor(), size, size);
         holder.mButton.setBackground(Theme.getPressDrawable(
                 defaultDrawable,
                 selectDrawable,
@@ -162,7 +156,7 @@ public class AlbumAdapter extends HeaderAdapter<Album, BaseViewHolder> implement
             final PopupMenu popupMenu = new PopupMenu(wrapper,holder.mButton,Gravity.END);
             popupMenu.getMenuInflater().inflate(R.menu.menu_album_item, popupMenu.getMenu());
             popupMenu.setOnMenuItemClickListener(new AlbArtFolderPlaylistListener(mContext,
-                    albumid,
+                    albumId,
                     Constants.ALBUM,
                     album.getAlbum()));
             popupMenu.show();
@@ -177,13 +171,13 @@ public class AlbumAdapter extends HeaderAdapter<Album, BaseViewHolder> implement
         }
 
         //半圆着色
-        if(ListModel == Constants.GRID_MODEL){
+        if(mListModel == Constants.GRID_MODEL){
             Theme.TintDrawable(holder.mHalfCircle,R.drawable.icon_half_circular_left,
                     ColorUtil.getColor(ThemeStore.isDay() ? R.color.white : R.color.night_background_color_main));
         }
 
         //设置padding
-        if(ListModel == 2 && holder.mRoot != null){
+        if(mListModel == Constants.GRID_MODEL && holder.mRoot != null){
             if(position % 2 == 1){
                 holder.mRoot.setPadding(DensityUtil.dip2px(mContext,6),DensityUtil.dip2px(mContext,4),DensityUtil.dip2px(mContext,3),DensityUtil.dip2px(mContext,4));
             } else {
@@ -194,7 +188,7 @@ public class AlbumAdapter extends HeaderAdapter<Album, BaseViewHolder> implement
 
     @Override
     public void saveMode() {
-        SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"AlbumModel",ListModel);
+        SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"AlbumModel", mListModel);
     }
 
     @Override
@@ -219,7 +213,7 @@ public class AlbumAdapter extends HeaderAdapter<Album, BaseViewHolder> implement
         @BindView(R.id.item_button)
         ImageButton mButton;
         @BindView(R.id.item_simpleiview)
-        SimpleDraweeView mImage;
+        ImageView mImage;
         @BindView(R.id.item_container)
         RelativeLayout mContainer;
         @BindView(R.id.item_root)

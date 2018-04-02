@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import remix.myplayer.R;
+import remix.myplayer.bean.mp3.Album;
 import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.bean.netease.NSearchRequest;
 import remix.myplayer.misc.cache.DiskCache;
@@ -125,30 +126,24 @@ public class ImageUriUtil {
     }
 
     /**
-     * 获得搜索歌词的关键字
-     * @param song
+     * 根据歌曲信息构建请求参数
+     * @param album
      * @return
      */
-    public static String getLyricSearchKey(Song song){
-        if(song == null)
-            return "";
-        boolean isTitlelegal = !TextUtils.isEmpty(song.getTitle()) && !song.getTitle().contains(mContext.getString(R.string.unknown_song));
-        boolean isAlbumlegal = !TextUtils.isEmpty(song.getAlbum()) && !song.getAlbum().contains(mContext.getString(R.string.unknown_album));
-        boolean isArtistlegal = !TextUtils.isEmpty(song.getArtist()) && !song.getArtist().contains(mContext.getString(R.string.unknown_artist));
+    public static NSearchRequest getSearchRequest(Album album, int localType){
+        if(album == null)
+            return NSearchRequest.DEFAULT_REQUEST;
+        boolean isAlbumlegal = !TextUtils.isEmpty(album.getAlbum()) && !album.getAlbum().contains(mContext.getString(R.string.unknown_album));
+        boolean isArtistlegal = !TextUtils.isEmpty(album.getArtist()) && !album.getArtist().contains(mContext.getString(R.string.unknown_artist));
 
-        //歌曲名合法
-        if(isTitlelegal){
-            //艺术家合法
-            if(isArtistlegal){
-                return song.getTitle() + "-" + song.getArtist();
-            } else if(isAlbumlegal){
-                //专辑名合法
-                return song.getTitle() + "-" + song.getAlbum();
-            } else {
-                return song.getTitle();
-            }
+        //根据专辑名字查询
+        if(isAlbumlegal){
+            if(isArtistlegal)
+                return new NSearchRequest(album.getAlbumID(),album.getArtist() + "-" + album.getAlbum(),1,localType);
+            else
+                return new NSearchRequest(album.getAlbumID(),album.getArtist(),10,localType);
         }
-        return "";
+        return NSearchRequest.DEFAULT_REQUEST;
     }
 
     public static NSearchRequest getSearchRequestWithAlbumType(Song song){

@@ -1,24 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fresco="http://schemas.android.com/apk/res-auto"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="@dimen/d64_size"
     android:id="@+id/item_root"
     android:background="?attr/background_list">
 
-    <com.facebook.drawee.view.SimpleDraweeView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:visibility="visible"
         android:layout_width="@dimen/d40_size"
         android:layout_height="@dimen/d40_size"
         android:id="@+id/song_head_image"
-        fresco:fadeDuration="@integer/FadeDuration"
-        fresco:placeholderImage="?attr/default_album"
-        fresco:placeholderImageScaleType="centerCrop"
-        fresco:actualImageScaleType="centerCrop"
-        fresco:failureImage="?attr/default_album"
-        fresco:failureImageScaleType="centerCrop"
-        fresco:roundAsCircle="true"
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/d16_size"
         android:layout_marginRight="@dimen/d16_size"/>
