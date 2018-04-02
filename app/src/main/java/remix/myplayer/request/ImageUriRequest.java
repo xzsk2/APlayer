@@ -65,6 +65,7 @@ public abstract class ImageUriRequest<T> {
     private static final RequestConfig DEFAULT_CONFIG = new RequestConfig.Builder()
             .forceDownload(true).build();
 
+
     public ImageUriRequest(RequestConfig config){
         mConfig = config;
     }

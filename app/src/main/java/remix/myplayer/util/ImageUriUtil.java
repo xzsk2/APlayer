@@ -4,11 +4,17 @@ import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.support.annotation.AttrRes;
 import android.text.TextUtils;
+
+import com.afollestad.materialdialogs.util.DialogUtils;
+import com.bumptech.glide.request.RequestOptions;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
 
 import remix.myplayer.R;
 import remix.myplayer.bean.mp3.Album;
@@ -150,4 +156,30 @@ public class ImageUriUtil {
         return getSearchRequest(song, ImageUriRequest.URL_ALBUM);
     }
 
+    private static final Map<String,RequestOptions> mOptionCache = new HashMap<>();
+    /**
+     * Glide配置
+     * @param context
+     * @param size
+     * @param defaultAttr
+     * @return
+     */
+    public static RequestOptions makeGlideOptions(Context context, int size,@AttrRes int defaultAttr){
+        String key = size + defaultAttr + "";
+        if(mOptionCache.containsKey(key)){
+            return mOptionCache.get(key);
+        } else {
+            RequestOptions options = new RequestOptions()
+                    .override(size,size)
+                    .placeholder(DialogUtils.resolveDrawable(context,defaultAttr))
+                    .error(DialogUtils.resolveDrawable(context,defaultAttr))
+                    .dontAnimate();
+            mOptionCache.put(key,options);
+            return options;
+        }
+    }
+
+    public static RequestOptions makeGlideOptions(Context context){
+        return makeGlideOptions(context,ImageUriRequest.SMALL_IMAGE_SIZE,R.attr.default_album);
+    }
 }

@@ -29,7 +29,6 @@ import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
 import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.facebook.imagepipeline.core.ImagePipeline;
 import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;
@@ -59,7 +58,6 @@ import remix.myplayer.misc.cache.DiskCache;
 import remix.myplayer.misc.handler.MsgHandler;
 import remix.myplayer.misc.handler.OnHandleMessage;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.service.MusicService;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.theme.ThemeStore;
@@ -73,6 +71,7 @@ import remix.myplayer.util.ColorUtil;
 import remix.myplayer.util.Constants;
 import remix.myplayer.util.DensityUtil;
 import remix.myplayer.util.Global;
+import remix.myplayer.util.ImageUriUtil;
 import remix.myplayer.util.MediaStoreUtil;
 import remix.myplayer.util.PlayListUtil;
 import remix.myplayer.util.SPUtil;
@@ -101,7 +100,7 @@ public class MainActivity extends MultiChoiceActivity implements UpdateHelper.Ca
     @BindView(R.id.header_txt)
     TextView mHeadText;
     @BindView(R.id.header_img)
-    SimpleDraweeView mHeadImg;
+    ImageView mHeadImg;
     @BindView(R.id.header)
     View mHeadRoot;
     @BindView(R.id.recyclerview)
@@ -406,10 +405,6 @@ public class MainActivity extends MultiChoiceActivity implements UpdateHelper.Ca
     private void setUpTab() {
         //添加tab选项卡
         boolean isLightColor = ThemeStore.isLightTheme();
-//        mTablayout = new TabLayout(new ContextThemeWrapper(this, !ColorUtil.isColorLight(ThemeStore.getMaterialPrimaryColor()) ? R.style.CustomTabLayout_Light : R.style.CustomTabLayout_Dark));
-//        mTablayout = new TabLayout(new ContextThemeWrapper(this,R.style.CustomTabLayout_Light));
-//        mTablayout.setLayoutParams(new AppBarLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,DensityUtil.dip2px(this,48)));
-//        mTablayout = new TabLayout(this);
         mTablayout.addTab(mTablayout.newTab().setText(R.string.tab_song));
         mTablayout.addTab(mTablayout.newTab().setText(R.string.tab_album));
         mTablayout.addTab(mTablayout.newTab().setText(R.string.tab_artist));
@@ -421,9 +416,6 @@ public class MainActivity extends MultiChoiceActivity implements UpdateHelper.Ca
         mTablayout.setSelectedTabIndicatorHeight(DensityUtil.dip2px(this,3));
         mTablayout.setTabTextColors(ColorUtil.getColor(isLightColor ? R.color.dark_normal_tab_text_color : R.color.light_normal_tab_text_color),
                 ColorUtil.getColor(isLightColor ? R.color.black : R.color.white));
-
-//        AppBarLayout appBarLayout = findView(R.id.appbar);
-//        appBarLayout.addView(mTablayout);
     }
 
     /**
@@ -610,7 +602,6 @@ public class MainActivity extends MultiChoiceActivity implements UpdateHelper.Ca
     public void UpdateUI(Song song, boolean isplay) {
         if (!mIsRunning)
             return;
-
         mBottomBar.updateBottomStatus(song, isplay);
 //        for(Fragment temp : getSupportFragmentManager().getFragments()) {
 //            if (temp instanceof SongFragment) {
@@ -627,14 +618,13 @@ public class MainActivity extends MultiChoiceActivity implements UpdateHelper.Ca
      * 更新侧滑菜单
      * @param song
      */
-    private static final int IMAGE_SIZE = DensityUtil.dip2px(APlayerApplication.getContext(),108);
     private void updateHeader(Song song, boolean isPlay) {
         if(song == null)
             return;
         mHeadText.setText(getString(R.string.play_now, song.getTitle()));
         new LibraryUriRequest(mHeadImg,
                 getSearchRequestWithAlbumType(song),
-                new RequestConfig.Builder(IMAGE_SIZE,IMAGE_SIZE).build()).load();
+                ImageUriUtil.makeGlideOptions(mContext,DensityUtil.dip2px(APlayerApplication.getContext(),108),R.attr.default_album)).load();
         mHeadImg.setBackgroundResource(isPlay && ThemeStore.isDay() ? R.drawable.drawer_bg_album_shadow : R.color.transparent);
     }
 
@@ -663,6 +653,7 @@ public class MainActivity extends MultiChoiceActivity implements UpdateHelper.Ca
             LOAD_COMPLETE = true;
             String action = receive != null ? receive.getAction() : "";
             if(ACTION_LOAD_FINISH.equals(action)){
+                UpdateUI(MusicService.getCurrentMP3(),false);
                 setUpBottomBar();
             }
         }

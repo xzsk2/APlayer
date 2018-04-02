@@ -15,7 +15,7 @@ import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
+import com.bumptech.glide.request.RequestOptions;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -23,14 +23,13 @@ import remix.myplayer.R;
 import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.listener.CtrlButtonListener;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.service.MusicService;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.ui.activity.PlayerActivity;
 import remix.myplayer.util.ColorUtil;
+import remix.myplayer.util.ImageUriUtil;
 
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
 import static remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType;
 
 /**
@@ -56,10 +55,12 @@ public class BottomActionBarFragment extends BaseFragment{
     @BindView(R.id.bottom_actionbar_root)
     LinearLayout mRootView;
     @BindView(R.id.bottom_action_bar_cover)
-    SimpleDraweeView mCover;
+    ImageView mCover;
 
     //保存封面位置信息
     private Rect mCoverRect;
+
+    private static RequestOptions GLIDE_OPTIONS;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -131,7 +132,7 @@ public class BottomActionBarFragment extends BaseFragment{
         if(mCover != null)
             new LibraryUriRequest(mCover,
                     getSearchRequestWithAlbumType(song),
-                    new RequestConfig.Builder(SMALL_IMAGE_SIZE, SMALL_IMAGE_SIZE).build()).load();
+                    ImageUriUtil.makeGlideOptions(mContext)).load();
         //设置按钮着色
         if(mPlayButton == null)
             return;

@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:id="@+id/header_root"
     android:layout_width="@dimen/d264_size"
     android:layout_height="wrap_content"
@@ -8,7 +7,7 @@
     android:gravity="center_horizontal"
     android:background="?attr/material_color_primary">
 
-    <com.facebook.drawee.view.SimpleDraweeView
+    <ImageView
         android:id="@+id/header_img"
         android:layout_marginTop="@dimen/d20_size"
         android:layout_width="108dp"
@@ -18,9 +17,6 @@
         android:paddingRight="@dimen/d4_size"
         android:paddingBottom="@dimen/d6_size"
         android:scaleType="centerCrop"
-        fresco:actualImageScaleType="centerCrop"
-        fresco:placeholderImageScaleType="centerCrop"
-        fresco:placeholderImage="?attr/default_album"
         android:background="@color/transparent"/>
 
     <TextView
