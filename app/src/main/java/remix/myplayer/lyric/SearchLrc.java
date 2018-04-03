@@ -196,9 +196,20 @@ public class SearchLrc {
      * @param type
      */
     private Observable<List<LrcRow>> getNetworkObservable(int type) {
+        if(mSong == null)
+            return Observable.error(new Throwable("song is null"));
+        String prefix = !TextUtils.isEmpty(mSong.getArtist()) ? mSong.getArtist() : !TextUtils.isEmpty(mSong.getAlbum()) ? mSong.getAlbum() : "";
+        StringBuilder key = new StringBuilder();
+        if(!TextUtils.isEmpty(prefix)){
+            key.append(prefix).append("-");
+        }
+        if(TextUtils.isEmpty(mSong.getTitle())){
+            return Observable.error(new Throwable("no title"));
+        }
+        key.append(mSong.getTitle());
         if(type == SPUtil.LYRIC_KEY.LYRIC_KUGOU){
             //酷狗歌词
-            return HttpClient.getKuGouApiservice().getKuGouSearch(1,"yes","pc",mSong.getArtist() + "-" + mSong.getTitle(),mSong.getDuration(),"")
+            return HttpClient.getKuGouApiservice().getKuGouSearch(1,"yes","pc",key.toString(),mSong.getDuration(),"")
                     .flatMap(body -> {
                         final KSearchResponse searchResponse = new Gson().fromJson(body.string(),KSearchResponse.class);
                         return HttpClient.getKuGouApiservice().getKuGouLyric(1,"pc","lrc","utf8",searchResponse.candidates.get(0).id,
@@ -213,7 +224,7 @@ public class SearchLrc {
         }else {
             //网易歌词
             return HttpClient.getNeteaseApiservice()
-                    .getNeteaseSearch(mSong.getArtist() + "-" + mSong.getTitle(),0,1,1)
+                    .getNeteaseSearch(key.toString(),0,1,1)
                     .flatMap(body -> HttpClient.getInstance()
                             .getNeteaseLyric(new Gson().fromJson(body.string(),NSongSearchResponse.class).result.songs.get(0).id)
                             .map(body1 -> {

@@ -116,19 +116,16 @@ public class ImageUriUtil {
         if(isTitlelegal){
             //艺术家合法
             if(isArtistlegal){
-                return new NSearchRequest(song.getAlbumId(),song.getTitle() + "-" + song.getArtist(),1,localType);
+                return new NSearchRequest(song.getAlbumId(),song.getTitle() + "-" + song.getArtist(),NSearchRequest.TYPE_NETEASE_SONG,localType);
             }
             //专辑名合法
             if(isAlbumlegal){
-                return new NSearchRequest(song.getAlbumId(),song.getTitle() + "-" + song.getAlbum(),1,localType);
+                return new NSearchRequest(song.getAlbumId(),song.getTitle() + "-" + song.getAlbum(),NSearchRequest.TYPE_NETEASE_SONG,localType);
             }
         }
         //根据专辑名字查询
-        if(isAlbumlegal){
-            if(isArtistlegal)
-                return new NSearchRequest(song.getAlbumId(),song.getArtist() + "-" + song.getAlbum(),1,localType);
-            else
-                return new NSearchRequest(song.getAlbumId(),song.getArtist(),10,localType);
+        if(isAlbumlegal && isArtistlegal){
+            return new NSearchRequest(song.getAlbumId(),song.getArtist() + "-" + song.getAlbum(),NSearchRequest.TYPE_NETEASE_ALBUM,localType);
         }
         return NSearchRequest.DEFAULT_REQUEST;
     }
@@ -145,11 +142,8 @@ public class ImageUriUtil {
         boolean isArtistlegal = !TextUtils.isEmpty(album.getArtist()) && !album.getArtist().contains(mContext.getString(R.string.unknown_artist));
 
         //根据专辑名字查询
-        if(isAlbumlegal){
-            if(isArtistlegal)
-                return new NSearchRequest(album.getAlbumID(),album.getArtist() + "-" + album.getAlbum(),1,localType);
-            else
-                return new NSearchRequest(album.getAlbumID(),album.getArtist(),10,localType);
+        if(isAlbumlegal && isArtistlegal){
+            return new NSearchRequest(album.getAlbumID(),album.getArtist() + "-" + album.getAlbum(),NSearchRequest.TYPE_NETEASE_ALBUM,localType);
         }
         return NSearchRequest.DEFAULT_REQUEST;
     }
