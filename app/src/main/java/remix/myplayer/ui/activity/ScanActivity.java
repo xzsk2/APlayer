@@ -6,7 +6,6 @@ import android.os.Message;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 
-import com.facebook.common.util.ByteConstants;
 import com.umeng.analytics.MobclickAgent;
 
 import java.util.ArrayList;
@@ -31,11 +30,11 @@ public class ScanActivity extends ToolbarActivity {
     //几种扫描大小
     static {
         mSizeList.add(0);
-        mSizeList.add(300 * ByteConstants.KB);
-        mSizeList.add(500 * ByteConstants.KB);
-        mSizeList.add(800 * ByteConstants.KB);
-        mSizeList.add(ByteConstants.MB);
-        mSizeList.add(2 * ByteConstants.KB);
+        mSizeList.add(300 * 1024);
+        mSizeList.add(500 * 1024);
+        mSizeList.add(800 * 1024);
+        mSizeList.add(1024 * 1024);
+        mSizeList.add(2 * 1024 * 1024);
     }
     private Handler mHandler = new Handler(){
         @Override
@@ -76,7 +75,7 @@ public class ScanActivity extends ToolbarActivity {
                 int size = mSizeList.get(position);
                 if(size >= 0) {
                     //纪录下设置的大小
-                    SPUtil.putValue(ScanActivity.this, SPUtil.SETTING_KEY.SETTING_NAME, "ScanSize", size);
+                    SPUtil.putValue(mContext, SPUtil.SETTING_KEY.SETTING_NAME, "ScanSize", size);
                     Constants.SCAN_SIZE = size;
                 }
             }

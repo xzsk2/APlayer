@@ -6,6 +6,7 @@ package remix.myplayer.util;
 
 import remix.myplayer.APlayerApplication;
 import remix.myplayer.R;
+import remix.myplayer.misc.ByteConstants;
 
 /**
  * 常量值
@@ -94,7 +95,7 @@ public class Constants {
     public static final int TOGGLE_FLOAT_LRC = 503;
 
     //扫描文件默认大小设置
-    public static int SCAN_SIZE = 0;
+    public static int SCAN_SIZE = ByteConstants.MB;
 
     //分享心情还是歌曲
     public final static int SHARESONG = 1;

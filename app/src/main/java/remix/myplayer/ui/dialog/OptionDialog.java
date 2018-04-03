@@ -12,7 +12,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.umeng.analytics.MobclickAgent;
 
 import butterknife.BindView;
@@ -21,7 +20,6 @@ import butterknife.OnClick;
 import remix.myplayer.R;
 import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.util.ColorUtil;
@@ -32,7 +30,6 @@ import remix.myplayer.util.PlayListUtil;
 import remix.myplayer.util.ToastUtil;
 
 import static com.afollestad.materialdialogs.DialogAction.POSITIVE;
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
 
 /**
  * Created by Remix on 2015/12/6.
@@ -57,7 +54,7 @@ public class OptionDialog extends BaseDialogActivity {
     TextView mTitle;
     //专辑封面
     @BindView(R.id.popup_image)
-    SimpleDraweeView mDraweeView;
+    ImageView mDraweeView;
 
     //当前正在播放的歌曲
     private Song mInfo = null;
@@ -81,7 +78,7 @@ public class OptionDialog extends BaseDialogActivity {
 
         //设置歌曲名与封面
         mTitle.setText(String.format("%s-%s", mInfo.getTitle(), mInfo.getArtist()));
-        new LibraryUriRequest(mDraweeView, ImageUriUtil.getSearchRequestWithAlbumType(mInfo),new RequestConfig.Builder(SMALL_IMAGE_SIZE,SMALL_IMAGE_SIZE).build()).load();
+        new LibraryUriRequest(mDraweeView, ImageUriUtil.getSearchRequestWithAlbumType(mInfo),ImageUriUtil.makeGlideOptions(mContext)).load();
         //置于底部
         Window w = getWindow();
 //        w.setWindowAnimations(R.style.AnimBottom);

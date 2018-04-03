@@ -1,14 +1,9 @@
 package remix.myplayer;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.os.Build;
 import android.support.multidex.MultiDexApplication;
 
-import com.facebook.common.util.ByteConstants;
-import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.imagepipeline.cache.MemoryCacheParams;
-import com.facebook.imagepipeline.core.ImagePipelineConfig;
 import com.squareup.leakcanary.LeakCanary;
 import com.umeng.analytics.MobclickAgent;
 import com.umeng.commonsdk.UMConfigure;
@@ -81,13 +76,13 @@ public class APlayerApplication extends MultiDexApplication{
         DiskCache.init(this);
         ColorUtil.setContext(this);
         PlayListUtil.setContext(this);
-        final int cacheSize = (int)(Runtime.getRuntime().maxMemory() / 8);
-        ImagePipelineConfig config = ImagePipelineConfig.newBuilder(this)
-                .setBitmapMemoryCacheParamsSupplier(() -> new MemoryCacheParams(cacheSize, Integer.MAX_VALUE,cacheSize,Integer.MAX_VALUE, 2 * ByteConstants.MB))
-                .setBitmapsConfig(Bitmap.Config.RGB_565)
-                .setDownsampleEnabled(true)
-                .build();
-        Fresco.initialize(this,config);
+//        final int cacheSize = (int)(Runtime.getRuntime().maxMemory() / 8);
+//        ImagePipelineConfig config = ImagePipelineConfig.newBuilder(this)
+//                .setBitmapMemoryCacheParamsSupplier(() -> new MemoryCacheParams(cacheSize, Integer.MAX_VALUE,cacheSize,Integer.MAX_VALUE, 2 * ByteConstants.MB))
+//                .setBitmapsConfig(Bitmap.Config.RGB_565)
+//                .setDownsampleEnabled(true)
+//                .build();
+//        Fresco.initialize(this,config);
     }
 
     /**

@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -84,15 +83,21 @@ public class SongAdapter extends HeaderAdapter<Song,BaseViewHolder> implements F
                 new SongViewHolder(LayoutInflater.from(mContext).inflate(R.layout.item_song_recycle,parent,false));
     }
 
+//    @Override
+//    public void onViewRecycled(BaseViewHolder holder) {
+//        super.onViewRecycled(holder);
+//        if(holder instanceof SongViewHolder){
+//            ((SongViewHolder) holder).mImage.setImageURI(Uri.EMPTY);
+//        }
+//    }
+
+
     @Override
-    public void onViewRecycled(BaseViewHolder holder) {
-        super.onViewRecycled(holder);
-        if(holder instanceof SongViewHolder){
-            ((SongViewHolder) holder).mImage.setImageURI(Uri.EMPTY);
-        }
+    public long getItemId(int position) {
+        return position;
     }
 
-    @SuppressLint("RestrictedApi")
+    @SuppressLint({"RestrictedApi", "StaticFieldLeak"})
     @Override
     protected void convert(BaseViewHolder baseHolder, final Song song, int position) {
         if(position == 0){
@@ -134,7 +139,7 @@ public class SongAdapter extends HeaderAdapter<Song,BaseViewHolder> implements F
             return;
         final SongViewHolder holder = (SongViewHolder) baseHolder;
 
-//        if(SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ShowHighLight",true)){
+//        if(true){
 //            //获得当前播放的歌曲
 //            final Song currentMP3 = MusicService.getCurrentMP3();
 //            //判断该歌曲是否是正在播放的歌曲

@@ -16,7 +16,6 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.facebook.common.util.ByteConstants;
 import com.umeng.analytics.MobclickAgent;
 
 import butterknife.BindView;
@@ -25,6 +24,7 @@ import remix.myplayer.R;
 import remix.myplayer.bean.mp3.Genre;
 import remix.myplayer.bean.mp3.PlayListSong;
 import remix.myplayer.bean.mp3.Song;
+import remix.myplayer.misc.ByteConstants;
 import remix.myplayer.service.MusicService;
 import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.ui.activity.EQActivity;

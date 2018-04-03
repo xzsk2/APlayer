@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.support.v7.view.ContextThemeWrapper;
 import android.support.v7.widget.PopupMenu;
@@ -62,14 +61,13 @@ public class PlayListAdapter extends HeaderAdapter<PlayList, BaseViewHolder> imp
                 new PlayListGridHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_playlist_recycle_grid,parent,false));
     }
 
-    @Override
-    public void onViewRecycled(BaseViewHolder holder) {
-        super.onViewRecycled(holder);
-        if(holder instanceof PlayListHolder){
-            ((PlayListHolder) holder).mImage.setImageURI(Uri.EMPTY);
-        }
-    }
-
+//    @Override
+//    public void onViewRecycled(BaseViewHolder holder) {
+//        super.onViewRecycled(holder);
+//        if(holder instanceof PlayListHolder){
+//            ((PlayListHolder) holder).mImage.setImageURI(Uri.EMPTY);
+//        }
+//    }
 
     @SuppressLint("RestrictedApi")
     @Override

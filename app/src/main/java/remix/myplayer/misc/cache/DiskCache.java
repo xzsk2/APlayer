@@ -5,10 +5,10 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Environment;
 
-import com.facebook.common.util.ByteConstants;
-
 import java.io.File;
 import java.io.IOException;
+
+import remix.myplayer.misc.ByteConstants;
 
 /**
  * Created by Remix on 2016/6/14.

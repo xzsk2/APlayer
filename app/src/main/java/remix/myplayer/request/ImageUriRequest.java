@@ -3,29 +3,18 @@ package remix.myplayer.request;
 import android.content.ContentUris;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 
-import com.facebook.common.executors.CallerThreadExecutor;
-import com.facebook.common.references.CloseableReference;
-import com.facebook.common.util.UriUtil;
-import com.facebook.datasource.DataSource;
-import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.imagepipeline.common.ResizeOptions;
-import com.facebook.imagepipeline.datasource.BaseBitmapDataSubscriber;
-import com.facebook.imagepipeline.image.CloseableImage;
-import com.facebook.imagepipeline.request.ImageRequest;
-import com.facebook.imagepipeline.request.ImageRequestBuilder;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.FutureTarget;
 import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.IOException;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableEmitter;
-import io.reactivex.ObservableOnSubscribe;
 import io.reactivex.ObservableSource;
 import io.reactivex.Observer;
 import io.reactivex.functions.Function;
@@ -135,7 +124,7 @@ public abstract class ImageUriRequest<T> {
             @Override
             protected void subscribeActual(Observer<? super String> observer) {
                 String imageUrl = SPUtil.getValue(APlayerApplication.getContext(),SPUtil.COVER_KEY.COVER_NAME,request.getKey(),"");
-                if(!TextUtils.isEmpty(imageUrl) && UriUtil.isNetworkUri(Uri.parse(imageUrl))){
+                if(!TextUtils.isEmpty(imageUrl)){
                     observer.onNext(imageUrl);
                 }
                 observer.onComplete();
@@ -164,7 +153,7 @@ public abstract class ImageUriRequest<T> {
             NArtistSearchResponse response = new Gson().fromJson(body.string(), NArtistSearchResponse.class);
             imageUrl = response.getResult().getArtists().get(0).getPicUrl();
         }
-        if(!TextUtils.isEmpty(imageUrl) && UriUtil.isNetworkUri(Uri.parse(imageUrl))){
+        if(!TextUtils.isEmpty(imageUrl)){
             SPUtil.putValue(APlayerApplication.getContext(),SPUtil.COVER_KEY.COVER_NAME,request.getKey(),imageUrl);
         }
         return imageUrl;
@@ -172,38 +161,20 @@ public abstract class ImageUriRequest<T> {
 
     protected Observable<Bitmap> getThumbBitmapObservable(NSearchRequest request) {
         return getThumbObservable(request)
-                .flatMap(new Function<String, ObservableSource<Bitmap>>() {
-                    @Override
-                    public ObservableSource<Bitmap> apply(String url) {
-                        return Observable.create(new ObservableOnSubscribe<Bitmap>() {
-                            @Override
-                            public void subscribe(ObservableEmitter<Bitmap> e) {
-                                Uri imageUri = !TextUtils.isEmpty(url) ? Uri.parse(url) : Uri.EMPTY;
-                                ImageRequest imageRequest =
-                                        ImageRequestBuilder.newBuilderWithSource(imageUri)
-                                                .setResizeOptions(new ResizeOptions(mConfig.getWidth(),mConfig.getHeight()))
-                                                .build();
-                                DataSource<CloseableReference<CloseableImage>> dataSource = Fresco.getImagePipeline().fetchDecodedImage(imageRequest,this);
-                                dataSource.subscribe(new BaseBitmapDataSubscriber() {
-                                    @Override
-                                    protected void onNewResultImpl(Bitmap bitmap) {
-                                        Bitmap result = copy(bitmap);
-                                        if(result == null) {
-                                            result = BitmapFactory.decodeResource(APlayerApplication.getContext().getResources(), R.drawable.album_empty_bg_day);
-                                        }
-                                        e.onNext(result);
-                                        e.onComplete();
-                                    }
-
-                                    @Override
-                                    protected void onFailureImpl(DataSource<CloseableReference<CloseableImage>> dataSource) {
-                                        e.onError(dataSource.getFailureCause());
-                                    }
-                                }, CallerThreadExecutor.getInstance());
-                            }
-                        });
+                .flatMap((Function<String, ObservableSource<Bitmap>>) url -> Observable.create(e -> {
+                    FutureTarget<Bitmap> futureTarget = Glide.with(APlayerApplication.getContext())
+                                    .asBitmap()
+                                    .load(!TextUtils.isEmpty(url) ? Uri.parse(url) : Uri.EMPTY)
+                                    .submit(mConfig.getWidth(),mConfig.getHeight());
+                    Bitmap result = copy(futureTarget.get());
+                    if(result == null)
+                        e.onError(new Throwable("no resource"));
+                    else {
+                        e.onNext(result);
+                        e.onComplete();
                     }
-                });
+
+                }));
     }
 
     /**

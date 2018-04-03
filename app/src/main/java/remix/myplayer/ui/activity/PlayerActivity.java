@@ -6,7 +6,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.PorterDuff;
 import android.graphics.Rect;
-import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.InsetDrawable;
@@ -16,6 +15,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Message;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
 import android.support.v7.graphics.Palette;
 import android.support.v7.view.ContextThemeWrapper;
@@ -34,13 +34,9 @@ import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
-import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.drawee.controller.ControllerListener;
-import com.facebook.drawee.drawable.ScalingUtils;
-import com.facebook.drawee.interfaces.DraweeController;
-import com.facebook.drawee.view.SimpleDraweeView;
-import com.facebook.imagepipeline.image.ImageInfo;
-import com.facebook.imagepipeline.request.ImageRequestBuilder;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringSystem;
@@ -63,7 +59,6 @@ import remix.myplayer.misc.handler.MsgHandler;
 import remix.myplayer.misc.handler.OnHandleMessage;
 import remix.myplayer.request.ImageUriRequest;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.request.network.RxUtil;
 import remix.myplayer.service.MusicService;
 import remix.myplayer.theme.Theme;
@@ -79,12 +74,12 @@ import remix.myplayer.util.ColorUtil;
 import remix.myplayer.util.Constants;
 import remix.myplayer.util.DensityUtil;
 import remix.myplayer.util.Global;
+import remix.myplayer.util.ImageUriUtil;
 import remix.myplayer.util.SPUtil;
 import remix.myplayer.util.StatusBarUtil;
 import remix.myplayer.util.ToastUtil;
 import remix.myplayer.util.Util;
 
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
 import static remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType;
 
 /**
@@ -108,7 +103,7 @@ public class PlayerActivity extends BaseActivity implements UpdateHelper.Callbac
     public boolean mIsDragSeekBarFromUser = false;
 
     //入场动画封面
-    SimpleDraweeView mAnimCover;
+    ImageView mAnimCover;
     //顶部信息
     @BindView(R.id.top_title)
     TextView mTopTitle;
@@ -282,16 +277,16 @@ public class PlayerActivity extends BaseActivity implements UpdateHelper.Callbac
         setUpViewColor();
 
         //设置失败加载的图片和缩放类型
-        mAnimCover = new SimpleDraweeView(this);
-        mAnimCover.getHierarchy().setActualImageScaleType(ScalingUtils.ScaleType.CENTER_CROP);
-        mAnimCover.getHierarchy().setFailureImage(ThemeStore.isDay() ? R.drawable.album_empty_bg_day : R.drawable.album_empty_bg_night, ScalingUtils.ScaleType.CENTER_CROP);
+        mAnimCover = new ImageView(this);
+//        mAnimCover.getHierarchy().setActualImageScaleType(ScalingUtils.ScaleType.CENTER_CROP);
+//        mAnimCover.getHierarchy().setFailureImage(ThemeStore.isDay() ? R.drawable.album_empty_bg_day : R.drawable.album_empty_bg_night, ScalingUtils.ScaleType.CENTER_CROP);
         mContainer.addView(mAnimCover);
 
         //设置封面
         if(mInfo != null)
             new LibraryUriRequest(mAnimCover,
                     getSearchRequestWithAlbumType(mInfo),
-                    new RequestConfig.Builder(SMALL_IMAGE_SIZE, SMALL_IMAGE_SIZE).build()).load();
+                    ImageUriUtil.makeGlideOptions(this)).load();
 
         //恢复位置信息
         if(savedInstanceState != null && savedInstanceState.getParcelable("Rect") != null){
@@ -384,43 +379,21 @@ public class PlayerActivity extends BaseActivity implements UpdateHelper.Callbac
             mIsBacking = true;
 
             //更新动画控件封面 保证退场动画的封面与fragment中封面一致
-            ImageRequestBuilder imageRequestBuilder = ImageRequestBuilder.newBuilderWithSource(mUri == null ? Uri.EMPTY : mUri);
-            DraweeController controller = Fresco.newDraweeControllerBuilder()
-                    .setImageRequest(imageRequestBuilder.build())
-                    .setOldController(mAnimCover.getController())
-                    .setControllerListener(new ControllerListener<ImageInfo>() {
+            Glide.with(mContext).load(mUri == null ? Uri.EMPTY : mUri)
+                    .apply(ImageUriUtil.makeGlideOptions(this,mPager.getWidth(),R.attr.default_album))
+                    .into(new SimpleTarget<Drawable>() {
                         @Override
-                        public void onSubmit(String id, Object callerContext) {
-
-                        }
-
-                        @Override
-                        public void onFinalImageSet(String id, ImageInfo imageInfo, Animatable animatable) {
+                        public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
+                            mAnimCover.setImageDrawable(resource);
                             playBackAnimation();
                         }
 
                         @Override
-                        public void onIntermediateImageSet(String id, ImageInfo imageInfo) {
-
-                        }
-
-                        @Override
-                        public void onIntermediateImageFailed(String id, Throwable throwable) {
-
-                        }
-
-                        @Override
-                        public void onFailure(String id, Throwable throwable) {
+                        public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                            mAnimCover.setImageDrawable(errorDrawable);
                             playBackAnimation();
                         }
-
-                        @Override
-                        public void onRelease(String id) {
-
-                        }
-                    })
-                    .build();
-            mAnimCover.setController(controller);
+                    });
             mAnimCover.setVisibility(View.VISIBLE);
         } else {
             finish();
@@ -567,19 +540,6 @@ public class PlayerActivity extends BaseActivity implements UpdateHelper.Callbac
      * 初始化seekbar
      */
     private void setUpSeekBar() {
-//        RelativeLayout seekbarContainer = findViewById(R.id.seekbar_container);
-//        mSeekBar = new SeekBar(mContext);
-//        mSeekBar.setProgressDrawable(getResources().getDrawable(R.drawable.bg_progress));
-//        mSeekBar.setPadding(DensityUtil.dip2px(mContext,5),0,DensityUtil.dip2px(mContext,5),0);
-//        mSeekBar.setThumb(Theme.getShape(GradientDrawable.OVAL,ThemeStore.getAccentColor(),DensityUtil.dip2px(mContext,10),DensityUtil.dip2px(mContext,10)));
-//
-//        RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, DensityUtil.dip2px(mContext,2));
-//        lp.setMargins(DensityUtil.dip2px(mContext,10),0,DensityUtil.dip2px(mContext,10),0);
-//
-//        lp.addRule(RelativeLayout.LEFT_OF,R.id.text_remain);
-//        lp.addRule(RelativeLayout.RIGHT_OF,R.id.text_hasplay);
-//        lp.addRule(RelativeLayout.CENTER_VERTICAL);
-//        seekbarContainer.addView(mSeekBar,lp);
         if(mInfo == null)
             return;
         //初始化已播放时间与剩余时间
@@ -902,11 +862,6 @@ public class PlayerActivity extends BaseActivity implements UpdateHelper.Callbac
         mSeekBar.setThumb(new InsetDrawable(Theme.TintDrawable(Theme.getShape(GradientDrawable.RECTANGLE,accentColor, DensityUtil.dip2px(this,2),DensityUtil.dip2px(this,6)),accentColor),
                 inset,inset,inset,inset));
 
-//        mSeekBar.setThumb(Theme.getShape(GradientDrawable.OVAL,ThemeStore.getAccentColor(),DensityUtil.dip2px(mContext,10),DensityUtil.dip2px(mContext,10)));
-//        Drawable seekbarBackground = mSeekBar.getBackground();
-//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && seekbarBackground instanceof RippleDrawable) {
-//            ((RippleDrawable)seekbarBackground).setColor(ColorStateList.valueOf( ColorUtil.adjustAlpha(ThemeStore.getAccentColor(),0.2f)));
-//        }
 
         //修改控制按钮颜色
         Theme.TintDrawable(mPlayBarNext,R.drawable.play_btn_next,accentColor);

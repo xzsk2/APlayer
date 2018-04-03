@@ -4,10 +4,9 @@ import android.content.Context;
 import android.net.Uri;
 import android.support.v7.widget.AppCompatCheckBox;
 import android.view.View;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
-import com.facebook.drawee.view.SimpleDraweeView;
 
 import java.util.ArrayList;
 
@@ -17,9 +16,8 @@ import remix.myplayer.adapter.holder.BaseViewHolder;
 import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.interfaces.OnSongChooseListener;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
+import remix.myplayer.util.ImageUriUtil;
 
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
 import static remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType;
 
 /**
@@ -53,7 +51,7 @@ public class SongChooseAdaper extends BaseAdapter<Song,SongChooseAdaper.SongChoo
 
         new LibraryUriRequest(holder.mImage,
                 getSearchRequestWithAlbumType(song),
-                new RequestConfig.Builder(SMALL_IMAGE_SIZE, SMALL_IMAGE_SIZE).build()).load();
+                ImageUriUtil.makeGlideOptions(mContext)).load();
         //选中歌曲
         holder.mRoot.setOnClickListener(v -> {
             holder.mCheck.setChecked(!holder.mCheck.isChecked());
@@ -77,7 +75,7 @@ public class SongChooseAdaper extends BaseAdapter<Song,SongChooseAdaper.SongChoo
         @BindView(R.id.checkbox)
         AppCompatCheckBox mCheck;
         @BindView(R.id.item_img)
-        SimpleDraweeView mImage;
+        ImageView mImage;
         @BindView(R.id.item_song)
         TextView mSong;
         @BindView(R.id.item_album)

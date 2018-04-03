@@ -9,10 +9,9 @@ import android.support.v7.widget.PopupMenu;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
-import com.facebook.drawee.view.SimpleDraweeView;
 
 import butterknife.BindView;
 import remix.myplayer.R;
@@ -20,13 +19,12 @@ import remix.myplayer.adapter.holder.BaseViewHolder;
 import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.listener.SongPopupListener;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.util.ColorUtil;
 import remix.myplayer.util.DensityUtil;
+import remix.myplayer.util.ImageUriUtil;
 
-import static remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE;
 import static remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType;
 
 /**
@@ -37,7 +35,6 @@ import static remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType;
  * 搜索结果的适配器
  */
 public class SearchAdapter extends BaseAdapter<Song,SearchAdapter.SearchResHolder> {
-
     private final GradientDrawable mDefaultDrawable;
     private final GradientDrawable mSelectDrawable;
 
@@ -56,7 +53,7 @@ public class SearchAdapter extends BaseAdapter<Song,SearchAdapter.SearchResHolde
         //封面
         new LibraryUriRequest(holder.mImage,
                 getSearchRequestWithAlbumType(song),
-                new RequestConfig.Builder(SMALL_IMAGE_SIZE, SMALL_IMAGE_SIZE).build()).load();
+                ImageUriUtil.makeGlideOptions(mContext)).load();
 
         //设置按钮着色
         int tintColor = ThemeStore.THEME_MODE == ThemeStore.DAY ? ColorUtil.getColor(R.color.gray_6c6a6c) : Color.WHITE;
@@ -86,7 +83,7 @@ public class SearchAdapter extends BaseAdapter<Song,SearchAdapter.SearchResHolde
         @BindView(R.id.reslist_item)
         RelativeLayout mRooView;
         @BindView(R.id.search_image)
-        SimpleDraweeView mImage;
+        ImageView mImage;
         @BindView(R.id.search_name)
         TextView mName;
         @BindView(R.id.search_detail)

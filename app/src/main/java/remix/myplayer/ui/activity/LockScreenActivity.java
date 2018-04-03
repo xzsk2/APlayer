@@ -1,5 +1,6 @@
 package remix.myplayer.ui.activity;
 
+import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -16,7 +17,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.umeng.analytics.MobclickAgent;
 
 import butterknife.BindView;
@@ -75,7 +75,7 @@ public class LockScreenActivity extends BaseActivity implements UpdateHelper.Cal
     @BindView(R.id.lockscreen_play)
     ImageButton mPlayButton;
     @BindView(R.id.lockscreen_image)
-    SimpleDraweeView mSimpleImage;
+    ImageView mSimpleImage;
     //背景
     @BindView(R.id.lockscreen_background)
     ImageView mImageBackground;
@@ -251,7 +251,7 @@ public class LockScreenActivity extends BaseActivity implements UpdateHelper.Cal
         if(mSimpleImage != null) {
             new LibraryUriRequest(mSimpleImage,
                     getSearchRequestWithAlbumType(mInfo),
-                    new RequestConfig.Builder(IMAGE_SIZE,IMAGE_SIZE).build()).load();
+                    ImageUriUtil.makeGlideOptions(IMAGE_SIZE,R.drawable.album_empty_bg_night)).load();
         }
         //下一首
         if(mNextSong != null && MusicService.getNextMP3() != null)
@@ -281,6 +281,7 @@ public class LockScreenActivity extends BaseActivity implements UpdateHelper.Cal
                 mNextSong.setBackground(Theme.getShape(GradientDrawable.RECTANGLE, Color.TRANSPARENT,0,2,mSongColor,0,0,1));
             }
 
+            @SuppressLint("CheckResult")
             @Override
             public void load() {
                 getThumbBitmapObservable(ImageUriUtil.getSearchRequestWithAlbumType(mInfo))

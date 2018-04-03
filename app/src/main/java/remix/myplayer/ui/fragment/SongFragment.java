@@ -53,6 +53,7 @@ public class SongFragment extends LibraryFragment<Song,SongAdapter> {
     @Override
     protected void initAdapter() {
         mAdapter = new SongAdapter(mContext,R.layout.item_song_recycle,mMultiChoice, SongAdapter.ALLSONG,mRecyclerView);
+        mAdapter.setHasStableIds(true);
         mAdapter.setOnItemClickListener(new OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
@@ -82,7 +83,6 @@ public class SongFragment extends LibraryFragment<Song,SongAdapter> {
         mRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         mRecyclerView.setItemAnimator(new DefaultItemAnimator());
         mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.setHasFixedSize(true);
     }
 
     /**

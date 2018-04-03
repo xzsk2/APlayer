@@ -1,11 +1,10 @@
-package remix.myplayer.request.network;
+package remix.myplayer.request;
 
 import android.graphics.Bitmap;
 import android.support.annotation.NonNull;
 
 import remix.myplayer.bean.netease.NSearchRequest;
-import remix.myplayer.request.ImageUriRequest;
-import remix.myplayer.request.RequestConfig;
+import remix.myplayer.request.network.RxUtil;
 
 /**
  * Created by Remix on 2017/12/10.

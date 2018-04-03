@@ -2,15 +2,14 @@ package remix.myplayer.adapter
 
 import android.content.Context
 import android.view.View
+import android.widget.ImageView
 import android.widget.TextView
 import butterknife.BindView
-import com.facebook.drawee.view.SimpleDraweeView
 import remix.myplayer.R
 import remix.myplayer.adapter.holder.BaseViewHolder
 import remix.myplayer.bean.mp3.Song
-import remix.myplayer.request.ImageUriRequest.SMALL_IMAGE_SIZE
 import remix.myplayer.request.LibraryUriRequest
-import remix.myplayer.request.RequestConfig
+import remix.myplayer.util.ImageUriUtil
 import remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType
 
 /**
@@ -24,12 +23,12 @@ class CustomSortAdapter (context: Context,layoutId: Int) : BaseAdapter<Song, Cus
         holder.mTitle.text = song.Title
         holder.mAlbum.text = song.album
         //封面
-        LibraryUriRequest(holder.mImage, getSearchRequestWithAlbumType(song), RequestConfig.Builder(SMALL_IMAGE_SIZE, SMALL_IMAGE_SIZE).build()).load()
+        LibraryUriRequest(holder.mImage, getSearchRequestWithAlbumType(song),ImageUriUtil.makeGlideOptions(mContext)).load()
     }
 
     class CustomSortHolder(itemView: View) : BaseViewHolder(itemView) {
         @BindView(R.id.item_img)
-        lateinit var mImage: SimpleDraweeView
+        lateinit var mImage: ImageView
         @BindView(R.id.item_song)
         lateinit var mTitle: TextView
         @BindView(R.id.item_album)

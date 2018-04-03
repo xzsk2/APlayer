@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:id="@+id/fragment_cover_root">
@@ -16,25 +15,24 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_cover_shadow"
-            android:layout_alignBottom="@+id/cover_image"
+            android:layout_alignBottom="@+id/cover_layout"
             android:layout_marginBottom="-30dp"
             android:visibility="invisible"/>
-        <com.facebook.drawee.view.SimpleDraweeView
-            android:id="@+id/cover_image"
-            android:visibility="invisible"
+        <remix.myplayer.ui.customview.WidthFitSquareLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
+            android:layout_height="match_parent"
+            android:id="@+id/cover_layout"
             android:layout_marginTop="@dimen/d12_size"
             android:layout_marginLeft="@dimen/cover_margin"
-            android:layout_marginRight="@dimen/cover_margin"
-            fresco:failureImage="@drawable/album_empty_bg_day"
-            fresco:failureImageScaleType="centerCrop"
-            fresco:actualImageScaleType="centerCrop"
-            fresco:fadeDuration="0"
-            fresco:viewAspectRatio="1"
-            fresco:roundingBorderWidth="@dimen/d2_size"
-            fresco:roundingBorderColor="@color/cover_border_color"/>
+            android:layout_marginRight="@dimen/cover_margin">
+            <ImageView
+                android:id="@+id/cover_image"
+                android:visibility="invisible"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignParentTop="true" />
+        </remix.myplayer.ui.customview.WidthFitSquareLayout>
+
     </RelativeLayout>
 
 </RelativeLayout>

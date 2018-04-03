@@ -12,8 +12,8 @@ import android.widget.RemoteViews;
 
 import remix.myplayer.R;
 import remix.myplayer.bean.mp3.Song;
+import remix.myplayer.request.RemoteUriRequest;
 import remix.myplayer.request.RequestConfig;
-import remix.myplayer.request.network.RemoteUriRequest;
 import remix.myplayer.service.MusicService;
 import remix.myplayer.util.DensityUtil;
 
@@ -68,7 +68,7 @@ public class BaseAppwidget extends AppWidgetProvider {
                         mBitmap.recycle();
                     }
                     mBitmap = null;
-                    remoteViews.setImageViewResource(R.id.appwidget_image, R.drawable.album_empty_bg_day);
+                    remoteViews.setImageViewResource(R.id.appwidget_image, R.drawable.album_empty_bg_night);
                     pushUpdate(context,appWidgetIds,remoteViews);
                 }
 
@@ -83,7 +83,7 @@ public class BaseAppwidget extends AppWidgetProvider {
                         if(mBitmap != null) {
                             remoteViews.setImageViewBitmap(R.id.appwidget_image, mBitmap);
                         } else {
-                            remoteViews.setImageViewResource(R.id.appwidget_image, R.drawable.album_empty_bg_day);
+                            remoteViews.setImageViewResource(R.id.appwidget_image, R.drawable.album_empty_bg_night);
                         }
 
                     } catch (Exception e){

@@ -1,23 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="@dimen/d56_size"
     android:id="@+id/item_root"
     android:background="?attr/background_common">
     
-    <com.facebook.drawee.view.SimpleDraweeView
+    <ImageView
         android:id="@+id/item_img"
         android:layout_width="@dimen/d42_size"
         android:layout_height="@dimen/d42_size"
         android:layout_margin="@dimen/d8_size"
-        android:layout_centerVertical="true"
-        fresco:actualImageScaleType="centerCrop"
-        fresco:placeholderImageScaleType="centerCrop"
-        fresco:placeholderImage="@drawable/album_empty_bg_day"
-        fresco:failureImage="@drawable/album_empty_bg_day"
-        fresco:failureImageScaleType="centerCrop"/>
+        android:layout_centerVertical="true"/>
 
     <android.support.v7.widget.AppCompatCheckBox
         android:layout_width="wrap_content"

@@ -3,7 +3,6 @@ package remix.myplayer.ui.activity;
 
 import android.app.Activity;
 import android.content.BroadcastReceiver;
-import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -28,8 +27,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.imagepipeline.core.ImagePipeline;
+import com.bumptech.glide.Glide;
 import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringSystem;
@@ -565,18 +563,8 @@ public class MainActivity extends MultiChoiceActivity implements UpdateHelper.Ca
                         new Thread(){
                             @Override
                             public void run() {
-                                ImagePipeline imagePipeline = Fresco.getImagePipeline();
-                                if(thumbBean.getType() != Constants.PLAYLIST){
-                                    if(new File(path).exists()){
-                                        Uri fileUri = Uri.parse("file://" + path);
-                                        imagePipeline.evictFromCache(fileUri);
-                                    } else {
-                                        Uri providerUri = ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart"), id);
-                                        imagePipeline.evictFromCache(providerUri);
-                                    }
-                                    mRefreshHandler.sendEmptyMessage(Constants.UPDATE_ADAPTER);
-                                }
-
+                                Glide.get(mContext.getApplicationContext()).clearDiskCache();
+                                Glide.get(mContext.getApplicationContext()).clearMemory();
                             }
                         }.start();
                     }

@@ -15,11 +15,11 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.facebook.drawee.view.SimpleDraweeView;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 import com.umeng.analytics.MobclickAgent;
 
@@ -39,13 +39,13 @@ import remix.myplayer.misc.cache.DiskCache;
 import remix.myplayer.misc.handler.MsgHandler;
 import remix.myplayer.misc.handler.OnHandleMessage;
 import remix.myplayer.request.LibraryUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.service.MusicService;
 import remix.myplayer.theme.Theme;
 import remix.myplayer.ui.dialog.ShareDialog;
 import remix.myplayer.util.ColorUtil;
 import remix.myplayer.util.Constants;
 import remix.myplayer.util.DensityUtil;
+import remix.myplayer.util.ImageUriUtil;
 import remix.myplayer.util.StatusBarUtil;
 import remix.myplayer.util.ToastUtil;
 
@@ -63,7 +63,7 @@ public class RecordShareActivity extends BaseActivity {
     private static final int IMAGE_SIZE = DensityUtil.dip2px(APlayerApplication.getContext(),268);
 
     @BindView(R.id.recordshare_image)
-    SimpleDraweeView mImage;
+    ImageView mImage;
     //歌曲名与分享内容
     @BindView(R.id.recordshare_name)
     TextView mSong;
@@ -143,7 +143,7 @@ public class RecordShareActivity extends BaseActivity {
 
         new LibraryUriRequest(mImage,
                 getSearchRequestWithAlbumType(mInfo),
-                new RequestConfig.Builder(IMAGE_SIZE,IMAGE_SIZE).build()).load();
+                ImageUriUtil.makeGlideOptions(IMAGE_SIZE,R.drawable.album_empty_bg_day)).load();
 
         //设置歌曲名与分享内容
         String content = getIntent().getExtras().getString("Content");

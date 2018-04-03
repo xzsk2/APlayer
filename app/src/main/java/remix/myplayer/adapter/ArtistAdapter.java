@@ -5,7 +5,6 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.annotation.Nullable;
 import android.support.v7.view.ContextThemeWrapper;
@@ -68,13 +67,13 @@ public class ArtistAdapter extends HeaderAdapter<Artist, BaseViewHolder> impleme
                 new ArtistAdapter.ArtistGridHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.item_artist_recycle_grid,parent,false));
     }
 
-    @Override
-    public void onViewRecycled(BaseViewHolder holder) {
-        super.onViewRecycled(holder);
-        if(holder instanceof ArtistHolder){
-            ((ArtistHolder) holder).mImage.setImageURI(Uri.EMPTY);
-        }
-    }
+//    @Override
+//    public void onViewRecycled(BaseViewHolder holder) {
+//        super.onViewRecycled(holder);
+//        if(holder instanceof ArtistHolder){
+//            ((ArtistHolder) holder).mImage.setImageURI(Uri.EMPTY);
+//        }
+//    }
 
     @SuppressLint("RestrictedApi")
     @Override

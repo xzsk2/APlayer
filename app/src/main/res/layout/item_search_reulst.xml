@@ -1,24 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="@dimen/item_height"
     android:id="@+id/reslist_item"
     android:background="?attr/background_common">
-    <com.facebook.drawee.view.SimpleDraweeView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:layout_alignParentLeft="true"
         android:id="@+id/search_image"
         android:layout_centerVertical="true"
         android:layout_marginLeft="@dimen/d16_size"
         android:layout_marginRight="@dimen/d16_size"
         android:layout_width="@dimen/d45_size"
-        android:layout_height="@dimen/d45_size"
-        fresco:actualImageScaleType="centerCrop"
-        fresco:placeholderImageScaleType="centerCrop"
-        fresco:placeholderImage="?attr/default_album"
-        fresco:failureImage="?attr/default_album"
-        fresco:failureImageScaleType="centerCrop"
-        fresco:roundAsCircle="true"/>
+        android:layout_height="@dimen/d45_size" />
     <!--歌曲名、歌手、专辑-->
     <LinearLayout
         android:layout_width="match_parent"

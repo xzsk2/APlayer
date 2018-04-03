@@ -5,9 +5,11 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.AttrRes;
+import android.support.annotation.DrawableRes;
 import android.text.TextUtils;
 
 import com.afollestad.materialdialogs.util.DialogUtils;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 
 import java.io.File;
@@ -170,10 +172,27 @@ public class ImageUriUtil {
             return mOptionCache.get(key);
         } else {
             RequestOptions options = new RequestOptions()
+                    .centerCrop()
                     .override(size,size)
-                    .placeholder(DialogUtils.resolveDrawable(context,defaultAttr))
+//                    .placeholder(DialogUtils.resolveDrawable(context,defaultAttr))
                     .error(DialogUtils.resolveDrawable(context,defaultAttr))
-                    .dontAnimate();
+                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE);
+            mOptionCache.put(key,options);
+            return options;
+        }
+    }
+
+    public static RequestOptions makeGlideOptions(int size, @DrawableRes int defaultRes){
+        String key = size + defaultRes + "";
+        if(mOptionCache.containsKey(key)){
+            return mOptionCache.get(key);
+        } else {
+            RequestOptions options = new RequestOptions()
+                    .centerCrop()
+                    .override(size,size)
+//                    .placeholder(defaultRes)
+                    .error(defaultRes)
+                    .diskCacheStrategy(DiskCacheStrategy.RESOURCE);
             mOptionCache.put(key,options);
             return options;
         }

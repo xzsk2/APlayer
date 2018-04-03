@@ -1,22 +1,21 @@
 package remix.myplayer.ui.fragment;
 
-import android.graphics.drawable.Animatable;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 
-import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.drawee.controller.ControllerListener;
-import com.facebook.drawee.interfaces.DraweeController;
-import com.facebook.drawee.view.SimpleDraweeView;
-import com.facebook.imagepipeline.image.ImageInfo;
-import com.facebook.imagepipeline.request.ImageRequestBuilder;
+import com.afollestad.materialdialogs.util.DialogUtils;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.facebook.rebound.SimpleSpringListener;
 import com.facebook.rebound.Spring;
 import com.facebook.rebound.SpringSystem;
@@ -27,7 +26,6 @@ import remix.myplayer.R;
 import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.interfaces.OnFirstLoadFinishListener;
 import remix.myplayer.interfaces.OnInflateFinishListener;
-import remix.myplayer.theme.ThemeStore;
 import remix.myplayer.util.Constants;
 import remix.myplayer.util.Global;
 
@@ -41,7 +39,7 @@ import remix.myplayer.util.Global;
  */
 public class CoverFragment extends BaseFragment {
     @BindView(R.id.cover_image)
-    SimpleDraweeView mImage;
+    ImageView mImage;
     @BindView(R.id.cover_shadow)
     ImageView mShadow;
     @BindView(R.id.cover_container)
@@ -65,20 +63,19 @@ public class CoverFragment extends BaseFragment {
         View rootView = inflater.inflate(R.layout.fragment_cover,container,false);
         mUnBinder = ButterKnife.bind(this,rootView);
 
-        mImage.getHierarchy().setFailureImage(ThemeStore.isDay() ? R.drawable.album_empty_bg_day : R.drawable.album_empty_bg_night);
         mImage.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
             public boolean onPreDraw() {
                 mImage.getViewTreeObserver().removeOnPreDrawListener(this);
-
-                int imageWidth = mImage.getWidth();
-                int imageHeigh = mImage.getHeight();
-                //如果封面宽度大于高度 需要处理下
-                if(imageWidth > imageHeigh){
-                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) mImage.getLayoutParams();
-                    lp.width = lp.height = imageHeigh;
-                    mImage.setLayoutParams(lp);
-                }
+//
+//                int imageWidth = mImage.getWidth();
+//                int imageHeigh = mImage.getHeight();
+//                //如果封面宽度大于高度 需要处理下
+//                if(imageWidth > imageHeigh){
+//                    RelativeLayout.LayoutParams lp = (RelativeLayout.LayoutParams) mImage.getLayoutParams();
+//                    lp.width = lp.height = imageHeigh;
+//                    mImage.setLayoutParams(lp);
+//                }
 
                 if(mInflateFinishListener != null)
                     mInflateFinishListener.onViewInflateFinish(mImage);
@@ -164,51 +161,43 @@ public class CoverFragment extends BaseFragment {
 
     public void setImageUriInternal(){
         mShadow.setVisibility(View.INVISIBLE);
-        ImageRequestBuilder imageRequestBuilder = ImageRequestBuilder.newBuilderWithSource(mUri);
-        DraweeController controller = Fresco.newDraweeControllerBuilder()
-                .setImageRequest(imageRequestBuilder.build())
-                .setOldController(mImage.getController())
-                .setControllerListener(new ControllerListener<ImageInfo>() {
+
+        RequestOptions options = new RequestOptions()
+                .centerCrop()
+//                .placeholder(DialogUtils.resolveDrawable(mContext,R.attr.default_album))
+                .error(DialogUtils.resolveDrawable(mContext,R.attr.default_album))
+//                .override(mImage.getWidth(),mImage.getHeight())
+//                .transform(new GlideCircleTransform(mContext,DensityUtil.dip2px(mContext,2),Color.WHITE))
+                .dontAnimate();
+        Glide.with(mContext).load(mUri)
+                .apply(options)
+                .into(new SimpleTarget<Drawable>() {
                     @Override
-                    public void onSubmit(String id, Object callerContext) {
+                    public void onStart() {
 
                     }
 
                     @Override
-                    public void onFinalImageSet(String id, ImageInfo imageInfo, Animatable animatable) {
+                    public void onResourceReady(@NonNull Drawable resource, @Nullable Transition<? super Drawable> transition) {
                         if(mFirstLoadFinishListener != null){
                             mFirstLoadFinishListener.onFirstLoadFinish();
                             mFirstLoadFinishListener = null;
                         }
                         mShadow.setVisibility(View.VISIBLE);
+                        mImage.setImageDrawable(resource);
                     }
 
                     @Override
-                    public void onIntermediateImageSet(String id, ImageInfo imageInfo) {
-
-                    }
-
-                    @Override
-                    public void onIntermediateImageFailed(String id, Throwable throwable) {
-
-                    }
-
-                    @Override
-                    public void onFailure(String id, Throwable throwable) {
+                    public void onLoadFailed(@Nullable Drawable errorDrawable) {
+                        super.onLoadFailed(errorDrawable);
                         if(mFirstLoadFinishListener != null){
                             mFirstLoadFinishListener.onFirstLoadFinish();
                             mFirstLoadFinishListener = null;
                         }
                         mShadow.setVisibility(View.VISIBLE);
+                        mImage.setImageDrawable(errorDrawable);
                     }
-
-                    @Override
-                    public void onRelease(String id) {
-
-                    }
-                })
-                .build();
-        mImage.setController(controller);
+                });
     }
 
     /**

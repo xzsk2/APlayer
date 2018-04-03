@@ -17,9 +17,6 @@ import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.TextUtils;
 
-import com.facebook.common.util.ByteConstants;
-import com.facebook.drawee.view.SimpleDraweeView;
-
 import java.io.File;
 import java.io.FileDescriptor;
 import java.io.IOException;
@@ -39,6 +36,7 @@ import remix.myplayer.bean.mp3.Artist;
 import remix.myplayer.bean.mp3.Genre;
 import remix.myplayer.bean.mp3.Song;
 import remix.myplayer.helper.SortOrder;
+import remix.myplayer.misc.ByteConstants;
 import remix.myplayer.misc.cache.DiskCache;
 import remix.myplayer.request.ImageUriRequest;
 
@@ -115,11 +113,8 @@ public class MediaStoreUtil {
         Cursor cursor = null;
 
         //默认过滤文件大小1MB
-        Constants.SCAN_SIZE = SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,SPUtil.SETTING_KEY.SCAN_SIZE,-1);
-        if( Constants.SCAN_SIZE < 0) {
-            Constants.SCAN_SIZE = 1024 * ByteConstants.KB;
-            SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,SPUtil.SETTING_KEY.SCAN_SIZE,Constants.SCAN_SIZE);
-        }
+        Constants.SCAN_SIZE = SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,SPUtil.SETTING_KEY.SCAN_SIZE,ByteConstants.MB);
+
         try {
             cursor = mContext.getContentResolver().query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
                     null,
@@ -172,12 +167,8 @@ public class MediaStoreUtil {
         ContentResolver resolver = mContext.getContentResolver();
         Cursor cursor = null;
 
-        //默认过滤文件大小500K
-        Constants.SCAN_SIZE = SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",-1);
-        if( Constants.SCAN_SIZE < 0) {
-            Constants.SCAN_SIZE = 500 * ByteConstants.KB;
-            SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",500 * ByteConstants.KB);
-        }
+        //默认过滤文件大小1MB
+        Constants.SCAN_SIZE = SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",ByteConstants.MB);
         try{
             cursor = resolver.query(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -211,12 +202,7 @@ public class MediaStoreUtil {
 
 
         //默认过滤文件大小500K
-        Constants.SCAN_SIZE = SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",-1);
-        if( Constants.SCAN_SIZE < 0) {
-            Constants.SCAN_SIZE = 500 * ByteConstants.KB;
-            SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",500 * ByteConstants.KB);
-        }
-
+        Constants.SCAN_SIZE = SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",ByteConstants.MB);
         try{
             cursor = resolver.query(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -251,13 +237,8 @@ public class MediaStoreUtil {
         ContentResolver resolver = mContext.getContentResolver();
         Cursor cursor = null;
 
-        //默认过滤文件大小500K
-        Constants.SCAN_SIZE = SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",-1);
-        if( Constants.SCAN_SIZE < 0) {
-            Constants.SCAN_SIZE = 500 * ByteConstants.KB;
-            SPUtil.putValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",500 * ByteConstants.KB);
-        }
-
+        //默认过滤文件大小1mb
+        Constants.SCAN_SIZE = SPUtil.getValue(mContext,SPUtil.SETTING_KEY.SETTING_NAME,"ScanSize",ByteConstants.MB);
         try{
             cursor = resolver.query(
                     MediaStore.Audio.Media.EXTERNAL_CONTENT_URI,
@@ -352,21 +333,6 @@ public class MediaStoreUtil {
         return type == ImageUriRequest.URL_ALBUM ? new File(DiskCache.getDiskCacheDir(mContext,"thumbnail/album") + "/" + Util.hashKeyForDisk(id * 255 + "")) :
                type == ImageUriRequest.URL_ARTIST ? new File(DiskCache.getDiskCacheDir(mContext,"thumbnail/artist") + "/" + Util.hashKeyForDisk(id * 255 + "")) :
                new File(DiskCache.getDiskCacheDir(mContext,"thumbnail/playlist") + "/" + Util.hashKeyForDisk(id * 255 + ""));
-    }
-
-    /**
-     * 设置专辑封面
-     * @param simpleDraweeView
-     * @param albumId
-     */
-    public static void setImageUrl(SimpleDraweeView simpleDraweeView,int albumId){
-        //先判断是否设置过封面
-        File imgFile = MediaStoreUtil.getImageUrlInCache(albumId, ImageUriRequest.URL_ALBUM);
-        if(imgFile != null && imgFile.exists()) {
-            simpleDraweeView.setImageURI(Uri.parse("file://" + imgFile));
-        } else {
-            simpleDraweeView.setImageURI(ContentUris.withAppendedId(Uri.parse("content://media/external/audio/albumart/"), albumId));
-        }
     }
 
     /**

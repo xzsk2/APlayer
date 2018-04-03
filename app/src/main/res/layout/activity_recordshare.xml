@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:fresco="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <LinearLayout
@@ -39,18 +38,12 @@
                     android:layout_height="@dimen/d268_size"
                     android:id="@+id/recordshare_image_container"
                     android:padding="@dimen/d4_size">
-                    <com.facebook.drawee.view.SimpleDraweeView
+                    <ImageView
                         android:layout_gravity="center"
                         android:id="@+id/recordshare_image"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        fresco:actualImageScaleType="centerCrop"
-                        fresco:placeholderImage="?attr/default_album"
-                        fresco:placeholderImageScaleType="centerCrop"
-                        fresco:failureImageScaleType="centerCrop"
-                        fresco:failureImage="@drawable/album_empty_bg_day"
-                        fresco:paddingStart="@dimen/d22_size"
-                        fresco:paddingEnd="@dimen/d22_size" />
+                        />
                 </FrameLayout>
                 <RelativeLayout
                     android:layout_width="match_parent"

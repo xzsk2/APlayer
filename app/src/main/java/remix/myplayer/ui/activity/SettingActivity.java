@@ -20,8 +20,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.afollestad.materialdialogs.MaterialDialog;
-import com.facebook.common.util.ByteConstants;
-import com.facebook.drawee.backends.pipeline.Fresco;
+import com.bumptech.glide.Glide;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.umeng.analytics.MobclickAgent;
@@ -39,6 +38,7 @@ import remix.myplayer.APlayerApplication;
 import remix.myplayer.R;
 import remix.myplayer.bean.Category;
 import remix.myplayer.listener.ShakeDetector;
+import remix.myplayer.misc.ByteConstants;
 import remix.myplayer.misc.MediaScanner;
 import remix.myplayer.misc.floatpermission.FloatWindowManager;
 import remix.myplayer.misc.handler.MsgHandler;
@@ -530,7 +530,8 @@ public class SettingActivity extends ToolbarActivity implements FolderChooserDia
 //                                SPUtil.deleteFile(mContext,SPUtil.SETTING_KEY.SETTING_NAME);
 //                                deleteDatabase(DBOpenHelper.DBNAME);
                                 //清除fresco缓存
-                                Fresco.getImagePipeline().clearCaches();
+                                Glide.get(mContext.getApplicationContext()).clearDiskCache();
+                                Glide.get(mContext.getApplicationContext()).clearMemory();
                                 mHandler.sendEmptyMessage(CLEAR_FINISH);
                                 mNeedRefreshAdapter = true;
                             }
