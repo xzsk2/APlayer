@@ -17,8 +17,6 @@ import android.widget.Toast
 import butterknife.BindView
 import butterknife.ButterKnife
 import com.afollestad.materialdialogs.MaterialDialog
-import com.anjlab.android.iab.v3.BillingProcessor
-import com.anjlab.android.iab.v3.TransactionDetails
 import io.reactivex.Observable
 import io.reactivex.ObservableSource
 import io.reactivex.Single
@@ -43,7 +41,7 @@ import java.io.File
 import java.io.OutputStream
 import java.util.*
 
-class SupportDevelopActivity : ToolbarActivity(), BillingProcessor.IBillingHandler {
+class SupportDevelopActivity : ToolbarActivity() {
   @BindView(R.id.toolbar)
   lateinit var mToolBar: Toolbar
   @BindView(R.id.activity_support_recyclerView)
@@ -53,10 +51,10 @@ class SupportDevelopActivity : ToolbarActivity(), BillingProcessor.IBillingHandl
 
   val SKU_IDS = arrayListOf("price_3", "price_8", "price_15", "price_25", "price_40")
 
-  private var mBillingProcessor: BillingProcessor? = null
-  private var mDisposable: Disposable? = null
+//  private var mBillingProcessor: BillingProcessor? = null
+//  private var mDisposable: Disposable? = null
 
-  private lateinit var mLoading: MaterialDialog
+//  private lateinit var mLoading: MaterialDialog
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -80,7 +78,7 @@ class SupportDevelopActivity : ToolbarActivity(), BillingProcessor.IBillingHandl
 
       override fun onItemClick(view: View?, position: Int) {
         if (App.IS_GOOGLEPLAY) {
-          mBillingProcessor?.purchase(this@SupportDevelopActivity, SKU_IDS[position])
+//          mBillingProcessor?.purchase(this@SupportDevelopActivity, SKU_IDS[position])
         } else {
           when (position) {
             0 -> {
@@ -164,7 +162,7 @@ class SupportDevelopActivity : ToolbarActivity(), BillingProcessor.IBillingHandl
               startActivity(intent)
             }
             else -> {
-              mBillingProcessor?.purchase(this@SupportDevelopActivity, SKU_IDS[position - 3])
+//              mBillingProcessor?.purchase(this@SupportDevelopActivity, SKU_IDS[position - 3])
             }
           }
         }
@@ -175,86 +173,86 @@ class SupportDevelopActivity : ToolbarActivity(), BillingProcessor.IBillingHandl
     mRecyclerView.layoutManager = GridLayoutManager(mContext, 2)
     mRecyclerView.adapter = mAdapter
 
-    mLoading = Theme.getBaseDialog(mContext)
-        .title(R.string.loading)
-        .content(R.string.please_wait)
-        .canceledOnTouchOutside(false)
-        .progress(true, 0)
-        .progressIndeterminateStyle(false).build()
+//    mLoading = Theme.getBaseDialog(mContext)
+//        .title(R.string.loading)
+//        .content(R.string.please_wait)
+//        .canceledOnTouchOutside(false)
+//        .progress(true, 0)
+//        .progressIndeterminateStyle(false).build()
 
-    mBillingProcessor = BillingProcessor(this, BuildConfig.GOOGLE_PLAY_LICENSE_KEY, this)
+//    mBillingProcessor = BillingProcessor(this, BuildConfig.GOOGLE_PLAY_LICENSE_KEY, this)
   }
 
-  private fun loadSkuDetails() {
-    if (mAdapter.datas.size > 3)
-      return
-    mDisposable = Single.fromCallable { mBillingProcessor?.getPurchaseListingDetails(SKU_IDS) }
-        .map {
-          val beans = ArrayList<PurchaseBean>()
-          it.sortedWith(kotlin.Comparator { o1, o2 ->
-            o1.priceValue.compareTo(o2.priceValue)
-          }).forEach {
-            beans.add(PurchaseBean(it.productId, "", it.title, it.priceText))
-          }
-          beans
-        }
-        .doFinally { mLoading.dismiss() }
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribeWith(object : DisposableSingleObserver<List<PurchaseBean>>() {
-          override fun onSuccess(datas: List<PurchaseBean>) {
-            mAdapter.datas.addAll(datas)
-            mAdapter.notifyDataSetChanged()
-          }
-
-          override fun onError(e: Throwable) {
-            ToastUtil.show(mContext, R.string.error_occur, e)
-          }
-
-          override fun onStart() {
-            if (hasWindowFocus()){
-              mLoading.show()
-            }
-          }
-        })
-  }
-
-  override fun onBillingInitialized() {
-    loadSkuDetails()
-  }
-
-  override fun onPurchaseHistoryRestored() {
-    Toast.makeText(this, R.string.restored_previous_purchases, Toast.LENGTH_SHORT).show()
-  }
-
-  override fun onProductPurchased(productId: String, details: TransactionDetails?) {
-    Single.fromCallable {
-      mBillingProcessor?.consumePurchase(productId)
-    }.subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(Consumer {
-          Toast.makeText(this, R.string.thank_you, Toast.LENGTH_SHORT).show()
-        })
-
-  }
-
-  override fun onBillingError(errorCode: Int, error: Throwable?) {
-    ToastUtil.show(mContext, R.string.error_occur, "code = $errorCode err =  $error")
-  }
-
-  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    mBillingProcessor?.let {
-      if (!it.handleActivityResult(requestCode, resultCode, data))
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-  }
+//  private fun loadSkuDetails() {
+//    if (mAdapter.datas.size > 3)
+//      return
+//    mDisposable = Single.fromCallable { mBillingProcessor?.getPurchaseListingDetails(SKU_IDS) }
+//        .map {
+//          val beans = ArrayList<PurchaseBean>()
+//          it.sortedWith(kotlin.Comparator { o1, o2 ->
+//            o1.priceValue.compareTo(o2.priceValue)
+//          }).forEach {
+//            beans.add(PurchaseBean(it.productId, "", it.title, it.priceText))
+//          }
+//          beans
+//        }
+//        .doFinally { mLoading.dismiss() }
+//        .subscribeOn(Schedulers.io())
+//        .observeOn(AndroidSchedulers.mainThread())
+//        .subscribeWith(object : DisposableSingleObserver<List<PurchaseBean>>() {
+//          override fun onSuccess(datas: List<PurchaseBean>) {
+//            mAdapter.datas.addAll(datas)
+//            mAdapter.notifyDataSetChanged()
+//          }
+//
+//          override fun onError(e: Throwable) {
+//            ToastUtil.show(mContext, R.string.error_occur, e)
+//          }
+//
+//          override fun onStart() {
+//            if (hasWindowFocus()){
+//              mLoading.show()
+//            }
+//          }
+//        })
+//  }
+//
+//  override fun onBillingInitialized() {
+//    loadSkuDetails()
+//  }
+//
+//  override fun onPurchaseHistoryRestored() {
+//    Toast.makeText(this, R.string.restored_previous_purchases, Toast.LENGTH_SHORT).show()
+//  }
+//
+//  override fun onProductPurchased(productId: String, details: TransactionDetails?) {
+//    Single.fromCallable {
+//      mBillingProcessor?.consumePurchase(productId)
+//    }.subscribeOn(Schedulers.io())
+//        .observeOn(AndroidSchedulers.mainThread())
+//        .subscribe(Consumer {
+//          Toast.makeText(this, R.string.thank_you, Toast.LENGTH_SHORT).show()
+//        })
+//
+//  }
+//
+//  override fun onBillingError(errorCode: Int, error: Throwable?) {
+//    ToastUtil.show(mContext, R.string.error_occur, "code = $errorCode err =  $error")
+//  }
+//
+//  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+//    mBillingProcessor?.let {
+//      if (!it.handleActivityResult(requestCode, resultCode, data))
+//        super.onActivityResult(requestCode, resultCode, data)
+//    }
+//  }
 
   override fun onDestroy() {
     super.onDestroy()
-    mBillingProcessor?.release()
-    mDisposable?.dispose()
-    if (mLoading.isShowing)
-      mLoading.dismiss()
+//    mBillingProcessor?.release()
+//    mDisposable?.dispose()
+//    if (mLoading.isShowing)
+//      mLoading.dismiss()
   }
 
 
