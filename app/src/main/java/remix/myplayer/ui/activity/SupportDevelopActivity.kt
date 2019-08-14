@@ -13,21 +13,12 @@ import android.support.v7.widget.GridLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.support.v7.widget.Toolbar
 import android.view.View
-import android.widget.Toast
 import butterknife.BindView
 import butterknife.ButterKnife
-import com.afollestad.materialdialogs.MaterialDialog
 import io.reactivex.Observable
 import io.reactivex.ObservableSource
-import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.functions.Consumer
 import io.reactivex.functions.Function
-import io.reactivex.observers.DisposableSingleObserver
-import io.reactivex.schedulers.Schedulers
 import remix.myplayer.App
-import remix.myplayer.BuildConfig
 import remix.myplayer.R
 import remix.myplayer.bean.misc.PurchaseBean
 import remix.myplayer.misc.cache.DiskCache
@@ -63,7 +54,7 @@ class SupportDevelopActivity : ToolbarActivity() {
     ButterKnife.bind(this)
     setUpToolbar(getString(R.string.support_develop))
 
-    mAdapter = PurchaseAdapter(mContext, R.layout.item_support)
+    mAdapter = PurchaseAdapter(R.layout.item_support)
 
     val beans = ArrayList<PurchaseBean>()
     if (!App.IS_GOOGLEPLAY) {

@@ -49,8 +49,8 @@ class LyricSearcher {
 
   private fun parse() {
     try {
-      if (!TextUtils.isEmpty(song.displayname)) {
-        val temp = song.displayname
+      if (!TextUtils.isEmpty(song.displayName)) {
+        val temp = song.displayName
         displayName = if (temp.indexOf('.') > 0) temp.substring(0, temp.lastIndexOf('.')) else temp
       }
       searchKey = getLyricSearchKey(song)
@@ -114,14 +114,14 @@ class LyricSearcher {
         Observable.concat(observables).firstOrError().toObservable()
       }
       else -> {
-        Observable.error<List<LrcRow>>(Throwable("unknown type"))
+        Observable.error(Throwable("unknown type"))
       }
     }
 
     return if (isTypeAvailable(type)) Observable.concat(getCacheObservable(), observable)
         .firstOrError()
         .toObservable()
-        .doOnSubscribe { disposable ->
+        .doOnSubscribe {
           cacheKey = Util.hashKeyForDisk(song.id.toString() + "-" +
               (if (!TextUtils.isEmpty(song.artist)) song.artist else "") + "-" +
               if (!TextUtils.isEmpty(song.title)) song.title else "")
@@ -158,7 +158,7 @@ class LyricSearcher {
     return Observable.create { e ->
       val lyric = tagEditor.getFieldValueSingle(FieldKey.LYRICS).blockingGet()
       if (!lyric.isNullOrEmpty()) {
-        e.onNext(lrcParser.getLrcRows(getBufferReader(lyric?.toByteArray(UTF_8) ?: return@create),
+        e.onNext(lrcParser.getLrcRows(getBufferReader(lyric.toByteArray(UTF_8)),
             true, cacheKey, searchKey))
         Timber.v("EmbeddedLyric")
       }
@@ -264,7 +264,7 @@ class LyricSearcher {
    */
   private fun getLocalObservable(): Observable<List<LrcRow>> {
     return Observable
-        .create<List<LrcRow>> { emitter ->
+        .create { emitter ->
           val path = getLocalLyricPath()
           if (path != null && path.isNotEmpty()) {
             Timber.v("LocalLyric")
@@ -278,7 +278,7 @@ class LyricSearcher {
    * 网易歌词
    */
   private fun getNeteaseObservable(): Observable<List<LrcRow>> {
-    return HttpClient.getNeteaseApiservice()
+    return HttpClient.getInstance()
         .getNeteaseSearch(searchKey, 0, 1, 1)
         .flatMap {
           HttpClient.getInstance()
@@ -313,10 +313,10 @@ class LyricSearcher {
    */
   private fun getKuGouObservable(): Observable<List<LrcRow>> {
     //酷狗歌词
-    return HttpClient.getKuGouApiservice().getKuGouSearch(1, "yes", "pc", searchKey, song.duration, "")
+    return HttpClient.getInstance().getKuGouSearch(searchKey, song.getDuration(), "")
         .flatMap { body ->
           val searchResponse = Gson().fromJson(body.string(), KSearchResponse::class.java)
-          HttpClient.getKuGouApiservice().getKuGouLyric(1, "pc", "lrc", "utf8",
+          HttpClient.getInstance().getKuGouLyric(
               searchResponse.candidates[0].id,
               searchResponse.candidates[0].accesskey)
               .map { lrcBody ->
