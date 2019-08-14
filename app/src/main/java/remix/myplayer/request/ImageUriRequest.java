@@ -103,15 +103,18 @@ public abstract class ImageUriRequest<T> {
 
   public abstract void onSuccess(@Nullable T result);
 
-  protected void onStart(){
+  protected void onStart() {
 
   }
 
   public abstract Disposable load();
 
   protected Observable<String> getCoverObservable(UriRequest request) {
-    return Observable.concat(getCustomThumbObservable(request), getContentThumbObservable(request),
-        getNetworkThumbObservable(request))
+    return Observable
+        .concat(
+            getCustomThumbObservable(request),
+            getContentThumbObservable(request),
+            getNetworkThumbObservable(request))
         .doOnSubscribe(disposable -> onStart())
         .firstOrError()
         .toObservable();
@@ -248,9 +251,8 @@ public abstract class ImageUriRequest<T> {
         .flatMap(new Function<Boolean, ObservableSource<String>>() {
           private Observable<ResponseBody> getObservable(UriRequest request) {
             return request.getSearchType() == ImageUriRequest.URL_ALBUM ?
-                HttpClient.getLastFMApiservice()
-                    .getAlbumInfo(request.getAlbumName(), request.getArtistName(), null) :
-                HttpClient.getLastFMApiservice().getArtistInfo(request.getArtistName(), null);
+                HttpClient.getInstance().getAlbumInfo(request.getAlbumName(), request.getArtistName(), null) :
+                HttpClient.getInstance().getArtistInfo(request.getArtistName(), null);
           }
 
           @Override
@@ -299,7 +301,7 @@ public abstract class ImageUriRequest<T> {
       }
     }), Observable.just(isAutoDownloadCover() && !TextUtils.isEmpty(request.getNeteaseSearchKey()))
         .filter(aBoolean -> aBoolean)
-        .flatMap(aBoolean -> HttpClient.getNeteaseApiservice()
+        .flatMap(aBoolean -> HttpClient.getInstance()
             .getNeteaseSearch(request.getNeteaseSearchKey(), 0, 1, request.getNeteaseType())
             .map(responseBody -> parseNeteaseNetworkImageUrl(request, responseBody))
             .firstElement().toObservable()));

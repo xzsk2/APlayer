@@ -24,6 +24,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.WorkerThread;
 import com.facebook.common.util.ByteConstants;
+import com.tencent.bugly.crashreport.CrashReport;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -102,9 +103,19 @@ public class MediaStoreUtil {
             SortOrder.ArtistSortOrder.ARTIST_A_Z))) {
       if (cursor != null) {
         while (cursor.moveToNext()) {
-          artists.add(new Artist(cursor.getInt(0),
-              cursor.getString(1),
-              cursor.getInt(2)));
+          int id = cursor.getInt(0);
+          String artist = cursor.getString(1);
+          String artistName = cursor.getString(2);
+
+          try {
+            artists.add(new Artist(cursor.getInt(0),
+                cursor.getString(1),
+                cursor.getInt(2)));
+          } catch (Exception e) {
+            CrashReport
+                .postCatchedException(
+                    new Exception("getAllArtist, id: " + id + " artist: " + artist + " artistName: " + artistName));
+          }
         }
       }
     }
@@ -129,11 +140,18 @@ public class MediaStoreUtil {
             SortOrder.AlbumSortOrder.ALBUM_A_Z))) {
       if (cursor != null) {
         while (cursor.moveToNext()) {
-          albums.add(new Album(cursor.getInt(0),
-              processInfo(cursor.getString(1), TYPE_ALBUM),
-              cursor.getInt(2),
-              processInfo(cursor.getString(3), TYPE_ARTIST),
-              cursor.getInt(4)));
+          int albumId = cursor.getInt(0);
+          String album = cursor.getString(1);
+          int artistId = cursor.getInt(2);
+          String artist = cursor.getString(3);
+          int count = cursor.getInt(4);
+          try {
+            albums.add(new Album(albumId, album, artistId, artist, count));
+          } catch (Exception e) {
+            CrashReport.postCatchedException(new Exception("getAllAlbum, albumId: " + albumId +
+                "album: " + album + " artistId: " + artistId + " artist: " + artist + " count: " + count));
+          }
+
         }
       }
     }
@@ -250,7 +268,7 @@ public class MediaStoreUtil {
   @WorkerThread
   public static Song getSongInfo(Cursor cursor) {
     if (cursor == null || cursor.getColumnCount() <= 0) {
-      return Song.EMPTY_SONG;
+      return Song.Companion.getEMPTY_SONG();
     }
 
     long duration = cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.Media.DURATION));
@@ -613,7 +631,7 @@ public class MediaStoreUtil {
 
   public static Song getSong(@Nullable String selection, String[] selectionValues) {
     List<Song> songs = getSongs(selection, selectionValues, null);
-    return songs != null && songs.size() > 0 ? songs.get(0) : Song.EMPTY_SONG;
+    return songs != null && songs.size() > 0 ? songs.get(0) : Song.Companion.getEMPTY_SONG();
   }
 
   public static List<Song> getSongs(@Nullable String selection, String[] selectionValues,
