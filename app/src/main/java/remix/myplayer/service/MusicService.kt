@@ -6,6 +6,7 @@ import android.content.*
 import android.graphics.Bitmap
 import android.graphics.PixelFormat
 import android.media.AudioManager
+import android.media.MediaPlayer
 import android.media.session.PlaybackState
 import android.net.Uri
 import android.os.*
@@ -20,9 +21,8 @@ import android.view.Gravity
 import android.view.ViewGroup
 import android.view.WindowManager
 import io.reactivex.Single
-import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.Consumer
-import io.reactivex.schedulers.Schedulers
+import kotlinx.coroutines.*
 import remix.myplayer.R
 import remix.myplayer.appshortcuts.DynamicShortcutManager
 import remix.myplayer.appwidgets.BaseAppwidget
@@ -41,6 +41,7 @@ import remix.myplayer.lyric.LyricHolder.Companion.LYRIC_FIND_INTERVAL
 import remix.myplayer.lyric.bean.LyricRowWrapper
 import remix.myplayer.misc.LogObserver
 import remix.myplayer.misc.floatpermission.FloatWindowManager
+import remix.myplayer.misc.launchEasy
 import remix.myplayer.misc.observer.MediaStoreObserver
 import remix.myplayer.misc.receiver.HeadsetPlugReceiver
 import remix.myplayer.misc.receiver.HeadsetPlugReceiver.Companion.NEVER
@@ -66,7 +67,6 @@ import remix.myplayer.util.SPUtil.SETTING_KEY
 import remix.myplayer.util.ToastUtil
 import remix.myplayer.util.Util.*
 import timber.log.Timber
-import tv.danmaku.ijk.media.player.IjkMediaPlayer
 import java.io.File
 import java.lang.ref.WeakReference
 import java.util.*
@@ -81,7 +81,7 @@ import kotlin.collections.ArrayList
  */
 @SuppressLint("CheckResult")
 class MusicService : BaseService(), Playback, MusicEventCallback,
-    SharedPreferences.OnSharedPreferenceChangeListener {
+    SharedPreferences.OnSharedPreferenceChangeListener, CoroutineScope by MainScope() {
   /**
    * 所有歌曲id
    */
@@ -95,6 +95,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
    * 已经生成过的随机数 用于随机播放模式
    */
   private val randomQueue: MutableList<Int> = ArrayList()
+
   /**
    * 是否第一次准备完成
    */
@@ -154,15 +155,14 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
    * 下一首歌曲的索引
    */
   private var nextIndex = 0
+
   /**
    * 下一首播放歌曲的id
    */
   private var nextId = -1
+
   /**
    * 下一首播放的mp3
-   */
-  /**
-   * 返回下一首播放歌曲
    */
   var nextSong: Song = EMPTY_SONG
     private set
@@ -170,8 +170,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
   /**
    * MediaPlayer 负责歌曲的播放等
    */
-  var mediaPlayer: IjkMediaPlayer = IjkMediaPlayer()
-
+  var mediaPlayer: MediaPlayer = MediaPlayer()
 
   /**
    * 桌面部件
@@ -274,17 +273,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
   /**
    * service是否停止运行
    */
-  private var isServiceStop = true
-
-  /**
-   * handlerThread
-   */
-  private val playbackThread: HandlerThread by lazy {
-    HandlerThread("IO")
-  }
-  private val playbackHandler: PlaybackHandler by lazy {
-    PlaybackHandler(playbackThread.looper)
-  }
+  var stop = true
 
   /**
    * 监听锁屏
@@ -361,7 +350,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
     get() {
       try {
         if (prepared) {
-          return mediaPlayer.currentPosition.toInt()
+          return mediaPlayer.currentPosition
         }
       } catch (e: IllegalStateException) {
         Timber.v("getProgress() %s", e.toString())
@@ -370,7 +359,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
       return 0
     }
 
-  val duration: Long
+  val duration: Int
     get() = if (prepared) {
       mediaPlayer.duration
     } else 0
@@ -405,6 +394,10 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
     else
       desktopLyricView?.isLocked == true
 
+  /**
+   * 锁屏
+   */
+  private var lockScreen: Int = CLOSE_LOCKSCREEN
 
   override fun onTaskRemoved(rootIntent: Intent) {
     super.onTaskRemoved(rootIntent)
@@ -417,7 +410,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
   override fun onDestroy() {
     Timber.tag(TAG_LIFECYCLE).v("onDestroy")
     super.onDestroy()
-    isServiceStop = true
+    stop = true
     unInit()
   }
 
@@ -444,21 +437,18 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
   @SuppressLint("CheckResult")
   override fun onStartCommand(commandIntent: Intent?, flags: Int, startId: Int): Int {
     Timber.tag(TAG_LIFECYCLE).v("onStartCommand")
-    isServiceStop = false
+    stop = false
 
-    Single
-        .create<String> { emitter ->
-          hasPermission = hasPermissions(EXTERNAL_STORAGE_PERMISSIONS)
-          if (!loadFinished && hasPermission) {
-            load()
-          }
-          commandIntent?.action?.let {
-            emitter.onSuccess(it)
-          }
-        }.subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .subscribe { action -> handleStartCommandIntent(commandIntent, action) }
-
+    launchEasy(func = {
+      hasPermission = hasPermissions(EXTERNAL_STORAGE_PERMISSIONS)
+      if (!loadFinished && hasPermission) {
+        withContext(Dispatchers.IO) {
+          load()
+        }
+      }
+      val action = commandIntent?.action ?: return@launchEasy
+      handleStartCommandIntent(commandIntent, action)
+    })
     return START_NOT_STICKY
   }
 
@@ -482,9 +472,10 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
       }
       //锁屏
       SETTING_KEY.LOCKSCREEN -> {
-        when (SPUtil.getValue(service, SETTING_KEY.NAME, SETTING_KEY.LOCKSCREEN, APLAYER_LOCKSCREEN)) {
-          APLAYER_LOCKSCREEN, CLOSE_LOCKSCREEN -> clearMediaSession()
-          SYSTEM_LOCKSCREEN -> updateMediaSession(Command.NEXT)
+        lockScreen = SPUtil.getValue(service, SETTING_KEY.NAME, SETTING_KEY.LOCKSCREEN, APLAYER_LOCKSCREEN)
+        when (lockScreen) {
+          CLOSE_LOCKSCREEN -> clearMediaSession()
+          SYSTEM_LOCKSCREEN, APLAYER_LOCKSCREEN -> updateMediaSession(Command.NEXT)
         }
       }
       //断点播放
@@ -496,12 +487,15 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
           startSaveProgress()
         }
       }
+      //倍速播放
+      SETTING_KEY.SPEED -> {
+        speed = java.lang.Float.parseFloat(SPUtil.getValue(this, SETTING_KEY.NAME, SETTING_KEY.SPEED, "1.0"))
+        setSpeed(speed)
+      }
     }
   }
 
   private fun setUp() {
-    playbackThread.start()
-
     //配置变化
     getSharedPreferences(SETTING_KEY.NAME, Context.MODE_PRIVATE).registerOnSharedPreferenceChangeListener(this)
 
@@ -595,7 +589,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
       }
 
       override fun onSeekTo(pos: Long) {
-        setProgress(pos)
+        setProgress(pos.toInt())
       }
     })
 
@@ -608,7 +602,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
    * 初始化Mediaplayer
    */
   private fun setUpPlayer() {
-    mediaPlayer = IjkMediaPlayer()
+    mediaPlayer = MediaPlayer()
 
     mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC)
     mediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK)
@@ -627,16 +621,15 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
 
       if (firstPrepared) {
         if (lastProgress > 0) {
-          mediaPlayer.seekTo(lastProgress.toLong())
+          mediaPlayer.seekTo(lastProgress)
         }
         firstPrepared = false
-        EQHelper.init(this, mp.audioSessionId)
         //自动播放
         if (SPUtil.getValue(this, SETTING_KEY.NAME, SETTING_KEY.AUTO_PLAY, NEVER) != OPEN_SOFTWARE) {
-          mp.pause()
           return@setOnPreparedListener
         }
       }
+
       Timber.v("开始播放")
       //记录播放历史
       updatePlayHistory()
@@ -656,6 +649,9 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
       }
       false
     }
+
+    EQHelper.init(this, mediaPlayer.audioSessionId)
+    EQHelper.open(this, mediaPlayer.audioSessionId)
   }
 
 
@@ -707,7 +703,10 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
     if (alreadyUnInit) {
       return
     }
-    EQHelper.close(this, mediaPlayer)
+
+    cancel()
+
+    EQHelper.close(this, mediaPlayer.audioSessionId)
     if (isPlaying) {
       pause(false)
     }
@@ -724,12 +723,6 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
     updateUIHandler.removeCallbacksAndMessages(null)
     showDesktopLyric = false
 
-    if (Build.VERSION.SDK_INT >= 18) {
-      playbackThread.quitSafely()
-    } else {
-      playbackThread.quit()
-    }
-
     audioManager.abandonAudioFocus(audioFocusListener)
     mediaSession.isActive = false
     mediaSession.release()
@@ -739,10 +732,11 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
     unregisterReceiver(this, headSetReceiver)
     unregisterReceiver(this, screenReceiver)
     unregisterReceiver(this, widgetReceiver)
+
     getSharedPreferences(SETTING_KEY.NAME, Context.MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(this)
 
-
     releaseWakeLock()
+
     contentResolver.unregisterContentObserver(mediaStoreObserver)
 
     ShakeDetector.getInstance().stopListen()
@@ -875,17 +869,14 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
 
     setPlay(true)
 
-    //ijkmediaplayer每次设置数据源后audioSessionId会变化
-    EQHelper.open(this, mediaPlayer)
-
     //倍速播放
     setSpeed(speed)
 
-    //更新所有界面
-    updateUIHandler.sendEmptyMessage(UPDATE_META_DATA)
-
     //播放
     mediaPlayer.start()
+
+    //更新所有界面
+    updateUIHandler.sendEmptyMessage(UPDATE_META_DATA)
 
     //渐变
     if (fadeIn) {
@@ -895,9 +886,11 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
     }
 
     //保存当前播放和下一首播放的歌曲的id
-    playbackHandler.post {
-      SPUtil.putValue(service, SETTING_KEY.NAME, SETTING_KEY.LAST_SONG_ID, currentId)
-      SPUtil.putValue(service, SETTING_KEY.NAME, SETTING_KEY.NEXT_SONG_ID, nextId)
+    launch {
+      withContext(Dispatchers.IO) {
+        SPUtil.putValue(service, SETTING_KEY.NAME, SETTING_KEY.LAST_SONG_ID, currentId)
+        SPUtil.putValue(service, SETTING_KEY.NAME, SETTING_KEY.NEXT_SONG_ID, nextId)
+      }
     }
   }
 
@@ -935,38 +928,47 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
    * @param position 播放位置
    */
   override fun playSelectSong(position: Int) {
-    currentIndex = position
-    if (currentIndex == -1 || currentIndex >= playQueue.size) {
-      ToastUtil.show(service, R.string.illegal_arg)
-      return
-    }
-    currentId = playQueue[currentIndex]
-    currentSong = MediaStoreUtil.getSongById(currentId)
+    launch {
+      Timber.v("playSelectSong, $position")
+      currentIndex = position
+      if (currentIndex == -1 || currentIndex >= playQueue.size) {
+        ToastUtil.show(service, R.string.illegal_arg)
+        return@launch
+      }
+      currentId = playQueue[currentIndex]
+      currentSong = withContext(Dispatchers.IO) {
+        MediaStoreUtil.getSongById(currentId)
+      }
 
-    nextIndex = currentIndex
-    nextId = currentId
+      nextIndex = currentIndex
+      nextId = currentId
 
-    //如果是随机播放 需要调整下RandomQueue
-    //保证正常播放队列和随机播放队列中当前歌曲的索引一致
-    val index = randomQueue.indexOf(currentId)
-    if (playModel == PLAY_SHUFFLE &&
-        index != currentIndex &&
-        index > 0) {
-      Collections.swap(randomQueue, currentIndex, index)
-    }
+      //如果是随机播放 需要调整下RandomQueue
+      //保证正常播放队列和随机播放队列中当前歌曲的索引一致
+      val index = randomQueue.indexOf(currentId)
+      if (playModel == PLAY_SHUFFLE &&
+          index != currentIndex &&
+          index > 0) {
+        Collections.swap(randomQueue, currentIndex, index)
+      }
 
-    if (currentSong.url.isNullOrEmpty()) {
-      ToastUtil.show(service, R.string.song_lose_effect)
-      return
+      if (currentSong.url.isEmpty()) {
+        ToastUtil.show(service, R.string.song_lose_effect)
+        return@launch
+      }
+      prepare(currentSong.url)
+      updateNextSong()
     }
-    prepare(currentSong.url)
-    updateNextSong()
   }
 
   override fun onMediaStoreChanged() {
-    val song = MediaStoreUtil.getSongById(currentId)
-    currentSong = song
-    currentId = song.id
+    launch {
+      val song = withContext(Dispatchers.IO) {
+        MediaStoreUtil.getSongById(currentId)
+      }
+      currentSong = song
+      currentId = song.id
+    }
   }
 
   override fun onPermissionChanged(has: Boolean) {
@@ -1411,8 +1413,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
    * 更新锁屏
    */
   private fun updateMediaSession(control: Int) {
-    if (currentSong == EMPTY_SONG ||
-        SPUtil.getValue(service, SETTING_KEY.NAME, SETTING_KEY.LOCKSCREEN, APLAYER_LOCKSCREEN) == CLOSE_LOCKSCREEN) {
+    if (currentSong == EMPTY_SONG || lockScreen == CLOSE_LOCKSCREEN) {
       return
     }
 
@@ -1483,30 +1484,27 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
       pause(true)
     }
 
-    Single
-        .fromCallable {
+    launchEasy(
+        func = {
           prepared = false
-          isLove = repository.isMyLove(currentId)
-              .onErrorReturn {
-                false
-              }
-              .blockingGet()
-
+          isLove = withContext(Dispatchers.IO) {
+            repository.isMyLove(currentId)
+                .onErrorReturn {
+                  false
+                }
+                .blockingGet()
+          }
           mediaPlayer.reset()
-          mediaPlayer.dataSource = path
+          mediaPlayer.setDataSource(path)
           mediaPlayer.prepareAsync()
-          // ijkplayer如果设置了start-on-prepared为0，可能导致切歌的时候出现爆音
-          // 暂时的解决办法就是先将音量设为0
-          mediaPlayer.setVolume(0f, 0f)
           prepared = true
-        }
-        .compose(applySingleScheduler())
-        .subscribe({
           Timber.v("prepare finish")
-        }) {
+        },
+        catch = {
+          Timber.v("isMainThread: ${Looper.myLooper() == Looper.getMainLooper()}")
           ToastUtil.show(service, getString(R.string.play_failed) + it.toString())
           prepared = false
-        }
+        })
   }
 
   /**
@@ -1604,16 +1602,19 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
   /**
    * 设置MediaPlayer播放进度
    */
-  fun setProgress(current: Long) {
+  fun setProgress(current: Int) {
     if (prepared) {
       mediaPlayer.seekTo(current)
     }
   }
 
-  fun setSpeed(speed: Float) {
+  private fun setSpeed(speed: Float) {
     if (prepared) {
-      this.speed = speed
-      mediaPlayer.setSpeed(speed)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (mediaPlayer.isPlaying) {
+          mediaPlayer.playbackParams = mediaPlayer.playbackParams.setSpeed(speed)
+        }
+      }
     }
   }
 
@@ -1621,7 +1622,11 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
    * 读取歌曲id列表与播放队列
    */
   private fun loadSync() {
-    playbackHandler.post { this.load() }
+    launch {
+      withContext(Dispatchers.IO) {
+        load()
+      }
+    }
   }
 
   @WorkerThread
@@ -1893,7 +1898,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
       if (checkNoPermission()) {
         return
       }
-      if (isServiceStop) {
+      if (stop) {
         updateUIHandler.sendEmptyMessage(REMOVE_DESKTOP_LRC)
         return
       }
