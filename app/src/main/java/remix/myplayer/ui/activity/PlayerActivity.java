@@ -6,15 +6,20 @@ import static remix.myplayer.theme.ThemeStore.getAccentColor;
 import static remix.myplayer.theme.ThemeStore.getPlayerNextSongBgColor;
 import static remix.myplayer.theme.ThemeStore.getPlayerProgressColor;
 import static remix.myplayer.theme.ThemeStore.isLightTheme;
-import static remix.myplayer.util.Constants.PLAY_LOOP;
-import static remix.myplayer.util.Constants.PLAY_REPEAT;
-import static remix.myplayer.util.Constants.PLAY_SHUFFLE;
+import static remix.myplayer.theme.ThemeStore.sColoredNavigation;
+import static remix.myplayer.util.Constants.MODE_LOOP;
+import static remix.myplayer.util.Constants.MODE_REPEAT;
+import static remix.myplayer.util.Constants.MODE_SHUFFLE;
 import static remix.myplayer.util.ImageUriUtil.getSearchRequestWithAlbumType;
 import static remix.myplayer.util.SPUtil.SETTING_KEY.BOTTOM_OF_NOW_PLAYING_SCREEN;
+import static remix.myplayer.util.Util.registerLocalReceiver;
 import static remix.myplayer.util.Util.sendLocalBroadcast;
 
 import android.annotation.SuppressLint;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -27,10 +32,8 @@ import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Debug;
 import android.os.Message;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
@@ -72,8 +75,6 @@ import remix.myplayer.misc.handler.MsgHandler;
 import remix.myplayer.misc.handler.OnHandleMessage;
 import remix.myplayer.misc.menu.AudioPopupListener;
 import remix.myplayer.request.ImageUriRequest;
-import remix.myplayer.request.RemoteUriRequest;
-import remix.myplayer.request.RequestConfig;
 import remix.myplayer.request.network.RxUtil;
 import remix.myplayer.service.Command;
 import remix.myplayer.service.MusicService;
@@ -228,6 +229,7 @@ public class PlayerActivity extends BaseMusicActivity implements FileChooserDial
     mVolumeContainer.startAnimation(makeAnimation(mVolumeContainer, false));
   };
 
+  private Receiver mReceiver = new Receiver();
 
   @Override
   protected void setUpTheme() {
@@ -255,8 +257,7 @@ public class PlayerActivity extends BaseMusicActivity implements FileChooserDial
   protected void setNavigationBarColor() {
     super.setNavigationBarColor();
     //导航栏变色
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && SPUtil
-        .getValue(this, SPUtil.SETTING_KEY.NAME, SPUtil.SETTING_KEY.COLOR_NAVIGATION, false)) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && sColoredNavigation) {
       final int navigationColor = ThemeStore.getBackgroundColorMain(this);
       getWindow().setNavigationBarColor(navigationColor);
       Theme.setLightNavigationbarAuto(this, ColorUtil.isColorLight(navigationColor));
@@ -294,6 +295,7 @@ public class PlayerActivity extends BaseMusicActivity implements FileChooserDial
     setUpSeekBar();
     setUpViewColor();
 
+    registerLocalReceiver(mReceiver,new IntentFilter(ACTION_UPDATE_NEXT));
   }
 
   @Override
@@ -355,17 +357,17 @@ public class PlayerActivity extends BaseMusicActivity implements FileChooserDial
       //设置播放模式
       case R.id.playbar_model:
         int currentModel = MusicServiceRemote.getPlayModel();
-        currentModel = (currentModel == PLAY_REPEAT ? PLAY_LOOP : ++currentModel);
+        currentModel = (currentModel == MODE_REPEAT ? MODE_LOOP : ++currentModel);
         MusicServiceRemote.setPlayModel(currentModel);
-        mPlayModel.setImageDrawable(Theme.tintDrawable(currentModel == PLAY_LOOP ? R.drawable.play_btn_loop :
-                currentModel == PLAY_SHUFFLE ? R.drawable.play_btn_shuffle : R.drawable.play_btn_loop_one,
+        mPlayModel.setImageDrawable(Theme.tintDrawable(currentModel == MODE_LOOP ? R.drawable.play_btn_loop :
+                currentModel == MODE_SHUFFLE ? R.drawable.play_btn_shuffle : R.drawable.play_btn_loop_one,
             ThemeStore.getPlayerBtnColor()));
 
-        String msg = currentModel == PLAY_LOOP ? getString(R.string.model_normal)
-            : currentModel == PLAY_SHUFFLE ? getString(R.string.model_random)
+        String msg = currentModel == MODE_LOOP ? getString(R.string.model_normal)
+            : currentModel == MODE_SHUFFLE ? getString(R.string.model_random)
                 : getString(R.string.model_repeat);
         //刷新下一首
-        if (currentModel != PLAY_SHUFFLE) {
+        if (currentModel != MODE_SHUFFLE) {
           mNextSong
               .setText(getString(R.string.next_song, MusicServiceRemote.getNextSong().getTitle()));
         }
@@ -1006,9 +1008,9 @@ public class PlayerActivity extends BaseMusicActivity implements FileChooserDial
     Theme.tintDrawable(mTopMore, R.drawable.icon_player_more, tintColor);
     //播放模式与播放队列
     int playMode = SPUtil.getValue(this, SPUtil.SETTING_KEY.NAME, SPUtil.SETTING_KEY.PLAY_MODEL,
-        PLAY_LOOP);
-    Theme.tintDrawable(mPlayModel, playMode == PLAY_LOOP ? R.drawable.play_btn_loop :
-        playMode == PLAY_SHUFFLE ? R.drawable.play_btn_shuffle :
+        MODE_LOOP);
+    Theme.tintDrawable(mPlayModel, playMode == MODE_LOOP ? R.drawable.play_btn_loop :
+        playMode == MODE_SHUFFLE ? R.drawable.play_btn_shuffle :
             R.drawable.play_btn_loop_one, tintColor);
     Theme.tintDrawable(mPlayQueue, R.drawable.play_btn_normal_list, tintColor);
 
@@ -1124,6 +1126,7 @@ public class PlayerActivity extends BaseMusicActivity implements FileChooserDial
     super.onDestroy();
     getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
     mHandler.remove();
+    Util.unregisterLocalReceiver(mReceiver);
   }
 
   /**
@@ -1191,12 +1194,21 @@ public class PlayerActivity extends BaseMusicActivity implements FileChooserDial
   }
 
   public void showLyricOffsetView() {
-    //todo∂
+    //todo
     if (mPager.getCurrentItem() != 2) {
       mPager.setCurrentItem(2, true);
     }
     if (getLyricFragment() != null) {
       getLyricFragment().showLyricOffsetView();
+    }
+  }
+
+  public static final String ACTION_UPDATE_NEXT = "remix.myplayer.update.next_song";
+  private class Receiver extends BroadcastReceiver{
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      //更新下一首歌曲
+      mNextSong.setText(getString(R.string.next_song, MusicServiceRemote.getNextSong().getTitle()));
     }
   }
 }

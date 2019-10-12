@@ -70,24 +70,24 @@ object MusicServiceRemote {
   class ServiceToken(var wrapperContext: ContextWrapper)
 
   @JvmStatic
-  fun setPlayQueue(newQueue: List<Int>) {
+  fun setPlayQueue(newQueue: List<Song>) {
     service?.setPlayQueue(newQueue)
   }
 
   @JvmStatic
-  fun setPlayQueue(newQueueIdList: List<Int>?, intent: Intent) {
+  fun setPlayQueue(newQueueIdList: List<Song>?, intent: Intent) {
     service?.setPlayQueue(newQueueIdList, intent)
   }
 
-  @JvmStatic
-  fun setAllSong(allSong: List<Int>?) {
-    service?.setAllSong(allSong)
-  }
-
-  @JvmStatic
-  fun getAllSong(): List<Int>? {
-    return service?.allSong
-  }
+//  @JvmStatic
+//  fun setAllSong(allSong: List<Int>?) {
+//    service?.setAllSong(allSong)
+//  }
+//
+//  @JvmStatic
+//  fun getAllSong(): List<Int>? {
+//    return service?.allSong
+//  }
 
 //  @JvmStatic
 //  fun setAllSongAsPlayQueue(intent: Intent) {
@@ -101,7 +101,7 @@ object MusicServiceRemote {
 
   @JvmStatic
   fun getPlayModel(): Int {
-    return service?.playModel ?: Constants.PLAY_LOOP
+    return service?.playModel ?: Constants.MODE_LOOP
   }
 
   @JvmStatic
@@ -117,11 +117,6 @@ object MusicServiceRemote {
   @JvmStatic
   fun getCurrentSong(): Song {
     return service?.currentSong ?: Song.EMPTY_SONG
-  }
-
-  @JvmStatic
-  fun setCurrentSong(song: Song) {
-    service?.currentSong = song
   }
 
   @JvmStatic
