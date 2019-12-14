@@ -84,6 +84,13 @@ public class Util {
   /**
    * 判断app是否运行在前台
    */
+  public static boolean isAppOnForeground1() {
+    return App.getContext().isAppForeground();
+  }
+
+  /**
+   * 判断app是否运行在前台
+   */
   public static boolean isAppOnForeground() {
     try {
       ActivityManager activityManager = (ActivityManager) App.getContext()
@@ -100,12 +107,14 @@ public class Util {
 
       for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
         if (appProcess.processName.equals(packageName)
-            && appProcess.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
+            && appProcess.importance
+            == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND) {
           return true;
         }
       }
     } catch (Exception e) {
       Timber.w("isAppOnForeground(), ex: %s", e.getMessage());
+      return isAppOnForeground1();
     }
     return false;
   }
