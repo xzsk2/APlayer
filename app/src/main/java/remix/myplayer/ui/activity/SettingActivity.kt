@@ -322,8 +322,10 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
       //                mLrcPath.setText(getString(R.string.lrc_tip, SPUtil.getValue(this, SPUtil.SETTING_KEY.NAME, SPUtil.SETTING_KEY.LOCAL_LYRIC_SEARCH_DIR, "")));
       //                break;
       "Scan" -> {
-        SPUtil.putValue(this, SETTING_KEY.NAME, SETTING_KEY.MANUAL_SCAN_FOLDER,
-            folder.absolutePath)
+        if (folder.exists() && folder.isDirectory && folder.list() != null) {
+          SPUtil.putValue(this, SETTING_KEY.NAME, SETTING_KEY.MANUAL_SCAN_FOLDER, folder.absolutePath)
+        }
+
         MediaScanner(mContext).scanFiles(folder)
         mNeedRefreshAdapter = true
       }
@@ -332,11 +334,11 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
           ToastUtil.show(mContext, R.string.export_fail)
           return
         }
-        SPUtil.putValue(this, SETTING_KEY.NAME, SETTING_KEY.EXPORT_PLAYLIST_FOLDER,
-            folder.absolutePath)
+        if (folder.exists() && folder.isDirectory && folder.list() != null) {
+          SPUtil.putValue(this, SETTING_KEY.NAME, SETTING_KEY.EXPORT_PLAYLIST_FOLDER, folder.absolutePath)
+        }
         mDisposables
-            .add(exportPlayListToFile(this, playListName, File(folder, "$playListName.m3u"))
-                ?: return)
+            .add(exportPlayListToFile(this, playListName, File(folder, "$playListName.m3u")))
       }
     }
   }
@@ -348,7 +350,7 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
 
         // 记录下导入的父目录
         val parent = file.parentFile
-        if (parent.exists() && parent.isDirectory) {
+        if (parent.exists() && parent.isDirectory && parent.list() != null) {
           SPUtil.putValue(this, SETTING_KEY.NAME, SETTING_KEY.IMPORT_PLAYLIST_FOLDER,
               parent.absolutePath)
         }
@@ -384,7 +386,7 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
                     mDisposables.add(
                         importM3UFile(this@SettingActivity, file,
                             if (chooseNew) newPlaylistName else text.toString(),
-                            chooseNew) ?: return@itemsCallback)
+                            chooseNew))
                   }
                   .show()
             }
@@ -429,7 +431,7 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
             .chooseButton(R.string.choose_folder)
             .tag("Scan")
             .allowNewFolder(false, R.string.new_folder)
-        if (initialFile.exists() && initialFile.isDirectory) {
+        if (initialFile.exists() && initialFile.isDirectory && initialFile.list() != null) {
           builder.initialPath(initialFile.absolutePath)
         }
         builder.show()
@@ -572,7 +574,7 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
           tryLaunch(catch = {
             Timber.w(it)
             ToastUtil.show(this, R.string.send_error, it.toString())
-          }) {
+          }, block = {
             if (which == DialogAction.POSITIVE) {
               withContext(Dispatchers.IO) {
                 try {
@@ -580,7 +582,8 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
                   zipFile.delete()
                   zipFile.createNewFile()
                   zipFile.zipOutputStream()
-                      .zipFrom("${Environment.getExternalStorageDirectory().absolutePath}/Android/data/$packageName/logs")
+                      .zipFrom("${Environment.getExternalStorageDirectory().absolutePath}/Android/data/$packageName/logs",
+                          "${applicationInfo.dataDir}/shared_prefs")
                   if (zipFile.length() > 0) {
                     val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                       emailIntent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
@@ -608,7 +611,7 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
               ToastUtil.show(this, R.string.not_found_email)
             }
 //            Intent.createChooser(data,"Email")
-          }
+          })
         }
         .show()
   }
@@ -662,14 +665,12 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
               .items(allPlayListNames)
               .itemsCallback { dialog, itemView, position, text ->
                 val initialFile = File(
-                    SPUtil.getValue(mContext, SETTING_KEY.NAME,
-                        SETTING_KEY.EXPORT_PLAYLIST_FOLDER,
-                        ""))
+                    SPUtil.getValue(mContext, SETTING_KEY.NAME, SETTING_KEY.EXPORT_PLAYLIST_FOLDER, ""))
                 val builder = Builder(this@SettingActivity)
                     .chooseButton(R.string.choose_folder)
                     .tag("ExportPlayList-$text")
                     .allowNewFolder(true, R.string.new_folder)
-                if (initialFile.exists() && initialFile.isDirectory) {
+                if (initialFile.exists() && initialFile.isDirectory && initialFile.list() != null) {
                   builder.initialPath(initialFile.absolutePath)
                 }
                 builder.show()
@@ -695,7 +696,7 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
                 this@SettingActivity)
                 .tag("Import")
                 .extensionsFilter(".m3u")
-            if (initialFile.exists() && initialFile.isDirectory) {
+            if (initialFile.exists() && initialFile.isDirectory && initialFile.list() != null) {
               builder.initialPath(initialFile.absolutePath)
             }
             builder.show()

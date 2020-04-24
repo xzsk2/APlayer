@@ -41,6 +41,7 @@ import remix.myplayer.misc.MediaScanner
 import remix.myplayer.misc.floatpermission.FloatWindowManager
 import remix.myplayer.misc.log.LogObserver
 import remix.myplayer.misc.observer.MediaStoreObserver
+import remix.myplayer.misc.receiver.ExitReceiver
 import remix.myplayer.misc.receiver.HeadsetPlugReceiver
 import remix.myplayer.misc.receiver.HeadsetPlugReceiver.Companion.NEVER
 import remix.myplayer.misc.receiver.HeadsetPlugReceiver.Companion.OPEN_SOFTWARE
@@ -64,6 +65,7 @@ import remix.myplayer.util.MediaStoreUtil
 import remix.myplayer.util.SPUtil
 import remix.myplayer.util.SPUtil.SETTING_KEY
 import remix.myplayer.util.ToastUtil
+import remix.myplayer.util.Util
 import remix.myplayer.util.Util.*
 import timber.log.Timber
 import java.io.File
@@ -136,6 +138,11 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
    * 当前播放的歌曲是否收藏
    */
   var isLove: Boolean = false
+
+  /**
+   * 播放完当前歌曲后是否停止app
+   */
+  private var exitAfterCompletion: Boolean = false
 
   /**
    * MediaPlayer 负责歌曲的播放等
@@ -234,6 +241,10 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
    * 是否显示桌面歌词
    */
   private var showDesktopLyric = false
+    set(value) {
+      Timber.v(Throwable("设置桌面歌词开关, old: $field new: $value"))
+      field = value
+    }
 
   /**
    * 桌面歌词控件
@@ -425,6 +436,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
   }
 
   override fun onSharedPreferenceChanged(sp: SharedPreferences, key: String) {
+    Timber.v("onSharedPreferenceChanged, key: $key")
     when (key) {
       //通知栏背景色
       SETTING_KEY.NOTIFY_SYSTEM_COLOR,
@@ -504,7 +516,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
     noisyFilter.addAction(Intent.ACTION_HEADSET_PLUG)
     registerReceiver(headSetReceiver, noisyFilter)
 
-    registerReceiver(widgetReceiver, IntentFilter(ACTION_WIDGET_UPDATE))
+    registerLocalReceiver(widgetReceiver, IntentFilter(ACTION_WIDGET_UPDATE))
 
     val screenFilter = IntentFilter()
     screenFilter.addAction(Intent.ACTION_SCREEN_ON)
@@ -513,6 +525,13 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
 
     //监听数据库变化
     contentResolver.registerContentObserver(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, true, mediaStoreObserver)
+
+    //定时关闭
+    SleepTimer.addCallback(object : SleepTimer.Callback {
+      override fun onFinish() {
+        exitAfterCompletion = true
+      }
+    })
 
     setUpPlayer()
     setUpSession()
@@ -580,6 +599,12 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
     mediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK)
 
     mediaPlayer.setOnCompletionListener { mp ->
+      if(exitAfterCompletion){
+        Timber.v("发送Exit广播")
+        sendBroadcast(Intent(ACTION_EXIT)
+            .setComponent(ComponentName(this@MusicService, ExitReceiver::class.java)))
+        return@setOnCompletionListener
+      }
       if (playModel == MODE_REPEAT) {
         prepare(playQueue.song.url)
       } else {
@@ -666,9 +691,9 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
 
     unregisterLocalReceiver(controlReceiver)
     unregisterLocalReceiver(musicEventReceiver)
+    unregisterLocalReceiver(widgetReceiver)
     unregisterReceiver(this, headSetReceiver)
     unregisterReceiver(this, screenReceiver)
-    unregisterReceiver(this, widgetReceiver)
 
     getSharedPreferences(SETTING_KEY.NAME, Context.MODE_PRIVATE).unregisterOnSharedPreferenceChangeListener(this)
 
@@ -943,6 +968,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
 
       val name = intent.getStringExtra(BaseAppwidget.EXTRA_WIDGET_NAME)
       val appIds = intent.getIntArrayExtra(BaseAppwidget.EXTRA_WIDGET_IDS)
+      Timber.v("name: $name appIds: $appIds")
       when (name) {
         APPWIDGET_BIG -> if (appWidgets[APPWIDGET_BIG] != null) {
           appWidgets[APPWIDGET_BIG]?.updateWidget(service, appIds, true)
@@ -1252,8 +1278,10 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
         ToastUtil.show(service, R.string.already_add_to_next_song)
       }
       //改变歌词源
-      Command.CHANGE_LYRIC -> if (showDesktopLyric) {
-        updateDesktopLyric(true)
+      Command.CHANGE_LYRIC -> {
+        if (showDesktopLyric) {
+          updateDesktopLyric(true)
+        }
       }
       //切换定时器
       Command.TOGGLE_TIMER -> {
@@ -1265,6 +1293,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
         SleepTimer.toggleTimer((time * 1000).toLong())
       }
       else -> {
+        Timber.v("unknown command")
       }
     }
   }
@@ -1520,6 +1549,7 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
   }
 
   private fun updateDesktopLyric(force: Boolean) {
+    Timber.v("updateDesktopLyric, showDesktopLyric: $showDesktopLyric")
     if (!showDesktopLyric) {
       return
     }
@@ -1642,18 +1672,18 @@ class MusicService : BaseService(), Playback, MusicEventCallback,
       if (songInLyricTask != playQueue.song) {
         songInLyricTask = playQueue.song
         lyricFetcher.updateLyricRows(songInLyricTask)
-        Timber.tag(TAG_DESKTOP_LYRIC).v("重新获取歌词内容")
+        Timber.tag(TAG_DESKTOP_LYRIC).v("重新获取歌词内容, id: ${songInLyricTask.id}")
         return
       }
       if (force) {
         force = false
         lyricFetcher.updateLyricRows(songInLyricTask)
-        Timber.tag(TAG_DESKTOP_LYRIC).v("强制重新获取歌词")
+        Timber.tag(TAG_DESKTOP_LYRIC).v("强制重新获取歌词, id: ${songInLyricTask.id}")
         return
       }
-//      Timber.TAG_DESKTOP_LYRIC(TAG_DESKTOP_LYRIC).v("更新桌面歌词")
       //判断权限
       if (checkNoPermission()) {
+        Timber.v("无悬浮窗权限")
         return
       }
       if (stop) {
