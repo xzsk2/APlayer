@@ -168,7 +168,7 @@
   <string name="system_lockscreen">系统锁屏</string>
   <string name="aplayer_lockscreen_tip">锁屏页会显示当前歌曲的封面,样式取决于APlayer</string>
   <string name="system_lockscreen_tip">锁屏页会显示当前歌曲的封面,样式取决于你的系统</string>
-  <string name="lockscreen_off_tip">锁屏页将不会显示歌曲封面</string>
+  <string name="lockscreen_off_tip">锁屏页将不会显示歌曲封面(某些特性可能无法使用)</string>
 
   <string name="choose_or_close_lockscreen">选择锁屏显示方式或者关闭锁屏</string>
   <string name="cant_play_this_sont">无法播放该歌曲</string>
@@ -391,7 +391,8 @@
   <string name="select_language_tips">将强制设置软件的语言</string>
 
   <string name="auto">跟随系统</string>
-  <string name="zh">简体中文</string>
+  <string name="zh_simple">简体中文</string>
+  <string name="zh_traditional">繁体中文</string>
   <string name="english">英文</string>
 
   <string name="bass_boost">低音增强</string>
