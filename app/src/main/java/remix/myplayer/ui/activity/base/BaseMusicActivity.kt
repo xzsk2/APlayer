@@ -4,15 +4,10 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.*
 import android.net.Uri
-import android.os.Bundle
-import android.os.Handler
-import android.os.IBinder
-import android.os.Message
+import android.os.*
 import android.text.TextUtils
 import com.facebook.drawee.backends.pipeline.Fresco
 import com.soundcloud.android.crop.Crop
-import io.reactivex.Observable
-import io.reactivex.ObservableOnSubscribe
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -23,10 +18,8 @@ import remix.myplayer.helper.MusicEventCallback
 import remix.myplayer.helper.MusicServiceRemote
 import remix.myplayer.misc.cache.DiskCache
 import remix.myplayer.request.ImageUriRequest
-import remix.myplayer.request.network.RxUtil
 import remix.myplayer.service.MusicService
 import remix.myplayer.util.Constants
-import remix.myplayer.util.MediaStoreUtil
 import remix.myplayer.util.ToastUtil
 import remix.myplayer.util.Util
 import remix.myplayer.util.Util.registerLocalReceiver
@@ -213,7 +206,7 @@ open class BaseMusicActivity : BaseActivity(), MusicEventCallback, CoroutineScop
             activity.onPermissionChanged(msg.data.getBoolean(EXTRA_PERMISSION))
           }
           MusicService.PLAYLIST_CHANGE -> {
-            activity.onPlayListChanged(msg.data.getString(EXTRA_PLAYLIST))
+            activity.onPlayListChanged(msg.data.getString(EXTRA_PLAYLIST) ?: "")
           }
           MusicService.META_CHANGE -> {
             activity.onMetaChanged()
@@ -300,7 +293,7 @@ open class BaseMusicActivity : BaseActivity(), MusicEventCallback, CoroutineScop
             ToastUtil.show(this, errorTxt)
             return
           }
-          val destination = Uri.fromFile(File(cacheDir, Util.hashKeyForDisk(id.toString() + "")))
+          val destination = Uri.fromFile(File(cacheDir, Util.hashKeyForDisk(id.toString() + "") + ".jpg"))
           Crop.of(data?.data, destination).asSquare().start(this)
         } else {
           //图片裁剪
@@ -313,53 +306,16 @@ open class BaseMusicActivity : BaseActivity(), MusicEventCallback, CoroutineScop
           }
 
           val path = Crop.getOutput(data).encodedPath
-          if (TextUtils.isEmpty(path) || id == -1) {
+          if (TextUtils.isEmpty(path) || id == -1L) {
             ToastUtil.show(mContext, errorTxt)
             return
           }
-          Observable
-              .create(ObservableOnSubscribe<Uri> { emitter ->
-                //                //获取以前的图片
-//                if (customCover.type == Constants.ALBUM) {
-//                  object : SimpleUriRequest(getSearchRequestWithAlbumType(
-//                      MediaStoreUtil.getSongByAlbumId(customCover.id))) {
-//                    override fun onError(throwable: Throwable) {
-//                      emitter.onError(throwable)
-//                    }
-//
-//                    override fun onSuccess(result: String?) {
-//                      if (!result.isNullOrBlank()) {
-//                        emitter.onNext(Uri.parse(result))
-//                      }
-//                      emitter.onComplete()
-//                    }
-//                  }.load()
-//                } else {
-//                  emitter.onNext(Uri.parse("file://$path"))
-//                  emitter.onComplete()
-//                }
-                emitter.onNext(Uri.EMPTY)
-                emitter.onComplete()
-              })
-              .doOnSubscribe {
-                //如果设置的是专辑封面 修改内嵌封面
-                if (customCover.type == Constants.ALBUM) {
-                  MediaStoreUtil.saveArtwork(mContext, customCover.id, File(path))
-                }
-              }
-              .compose(RxUtil.applyScheduler())
-              .doFinally {
-                onMediaStoreChanged()
-              }
-              .subscribe({ uri ->
-                val imagePipeline = Fresco.getImagePipeline()
-                imagePipeline.clearCaches()
-//                imagePipeline.evictFromCache(uri)
-//                imagePipeline.evictFromDiskCache(uri)
 
-              }, { throwable ->
-                ToastUtil.show(mContext, R.string.save_error_arg, throwable.toString())
-              })
+          Handler(Looper.getMainLooper()).postDelayed({
+            Fresco.getImagePipeline().clearCaches()
+            ImageUriRequest.clearUriCache()
+            onMediaStoreChanged()
+          }, 500)
         }
       }
     }
@@ -373,8 +329,10 @@ open class BaseMusicActivity : BaseActivity(), MusicEventCallback, CoroutineScop
 
     //更新适配器
     const val MSG_UPDATE_ADAPTER = 100
+
     //多选更新
     const val MSG_RESET_MULTI = 101
+
     //重建activity
     const val MSG_RECREATE_ACTIVITY = 102
   }
