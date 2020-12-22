@@ -12,7 +12,7 @@ import remix.myplayer.ui.activity.base.BaseMusicActivity
 open class BaseMusicFragment : BaseFragment(), MusicEventCallback {
   private var mMusicActivity: BaseMusicActivity? = null
 
-  override fun onAttach(context: Context?) {
+  override fun onAttach(context: Context) {
     super.onAttach(context)
     try {
       mMusicActivity = context as BaseMusicActivity?

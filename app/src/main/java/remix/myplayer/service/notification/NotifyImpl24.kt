@@ -6,8 +6,8 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Build
-import android.support.v4.app.NotificationCompat
-import android.support.v4.app.NotificationCompat.PRIORITY_MAX
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationCompat.PRIORITY_MAX
 import remix.myplayer.R
 import remix.myplayer.bean.mp3.Song
 import remix.myplayer.request.RemoteUriRequest
@@ -59,8 +59,8 @@ class NotifyImpl24(context: MusicService) : Notify(context) {
 
     val desktopLyricLock = service.isDesktopLyricLocked
 
-    val notification = NotificationCompat.Builder(service, Notify.PLAYING_NOTIFICATION_CHANNEL_ID)
-        .setVisibility(Notification.VISIBILITY_PUBLIC)
+    val notification = NotificationCompat.Builder(service, PLAYING_NOTIFICATION_CHANNEL_ID)
+        .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
         .setSmallIcon(R.drawable.icon_notifbar)
         .addAction(R.drawable.ic_skip_previous_black_24dp, service.getString(R.string.previous),
             buildPendingIntent(service, Command.PREV))
@@ -81,7 +81,7 @@ class NotifyImpl24(context: MusicService) : Notify(context) {
         .setOngoing(service.isPlaying)
         .setPriority(PRIORITY_MAX)
         .setContentText(song.artist + " - " + song.album)
-        .setStyle(android.support.v4.media.app.NotificationCompat.MediaStyle()
+        .setStyle(androidx.media.app.NotificationCompat.MediaStyle()
             .setShowActionsInCompactView(0, 1, 2, 3)
             .setMediaSession(service.mediaSession.sessionToken))
         .build()

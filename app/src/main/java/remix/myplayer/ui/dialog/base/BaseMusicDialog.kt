@@ -16,7 +16,7 @@ import remix.myplayer.util.Util
 open class BaseMusicDialog : BaseDialog(), MusicEventCallback {
   private var musicActivity: BaseMusicActivity? = null
 
-  override fun onAttach(context: Context?) {
+  override fun onAttach(context: Context) {
     super.onAttach(context)
     try {
       musicActivity = context as BaseMusicActivity?

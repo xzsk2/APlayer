@@ -12,18 +12,15 @@ import android.os.Environment
 import android.os.Message
 import android.provider.MediaStore
 import android.provider.Settings
-import android.support.v4.content.FileProvider
-import android.support.v7.widget.SwitchCompat
+import androidx.core.content.FileProvider
+import androidx.appcompat.widget.SwitchCompat
 import android.text.TextUtils
 import android.view.View
 import android.widget.CompoundButton
 import android.widget.CompoundButton.OnCheckedChangeListener
 import android.widget.ImageView
 import android.widget.TextView
-import butterknife.BindView
-import butterknife.BindViews
-import butterknife.ButterKnife
-import butterknife.OnClick
+import butterknife.*
 import com.afollestad.materialdialogs.DialogAction
 import com.facebook.common.util.ByteConstants
 import com.facebook.drawee.backends.pipeline.Fresco
@@ -198,7 +195,7 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
         SETTING_KEY.SCREEN_ALWAYS_ON, SETTING_KEY.NOTIFY_STYLE_CLASSIC, SETTING_KEY.IMMERSIVE_MODE,
         SETTING_KEY.PLAY_AT_BREAKPOINT, SETTING_KEY.IGNORE_MEDIA_STORE, SETTING_KEY.SHOW_DISPLAYNAME,
         SETTING_KEY.AUDIO_FOCUS)
-    ButterKnife.apply(arrayOf(mNaviSwitch, mShakeSwitch, mFloatLrcSwitch, mShowStatusbarLyric, mScreenSwitch, mNotifyStyleSwitch, mImmersiveSwitch, mBreakpointSwitch, mIgnoreMediastoreSwitch, mShowDisplaynameSwitch, mAudioFocusSwitch)) { view, index ->
+    ViewCollections.run(arrayOf(mNaviSwitch, mShakeSwitch, mFloatLrcSwitch, mShowStatusbarLyric, mScreenSwitch, mNotifyStyleSwitch, mImmersiveSwitch, mBreakpointSwitch, mIgnoreMediastoreSwitch, mShowDisplaynameSwitch, mAudioFocusSwitch)) { view, index ->
       TintHelper.setTintAuto(view, getAccentColor(), false)
 
       view.isChecked = SPUtil.getValue(mContext, SETTING_KEY.NAME, keyWord[index], false)
@@ -284,10 +281,10 @@ class SettingActivity : ToolbarActivity(), FolderChooserDialog.FolderCallback, F
 
     //初始化箭头颜色
     val accentColor = getAccentColor()
-    ButterKnife.apply(mArrows) { view, index -> Theme.tintDrawable(view, view.background, accentColor) }
+    ViewCollections.run(mArrows) { view, index -> Theme.tintDrawable(view, view.background, accentColor) }
 
     //标题颜色
-    ButterKnife.apply(mTitles) { view, index -> view.setTextColor(accentColor) }
+    ViewCollections.run(mTitles) { view, index -> view.setTextColor(accentColor) }
 
     //封面
     mOriginalAlbumChoice = SPUtil
